@@ -74,7 +74,7 @@ void HttpClient::RequestFinished(int requestId, bool error)
 
 void HttpClient::UpdateDataReadProgress(int bytesread, int totalbytes)
 {
-	qDebug() << tr( "Received： " ) << bytesread << tr( " Bytes.");
+	qDebug() << tr( "Received: " ) << bytesread << tr( " Bytes.");
 }
 
 void HttpClient::HttpDone(bool error)

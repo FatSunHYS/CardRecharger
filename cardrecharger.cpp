@@ -21,7 +21,7 @@ void CardRecharger::on_Recharge5Button_clicked()
 {
     emit CardRecharger::AllButtonDisable();
     QMessageBox::information( this, "a", "5" );
-	QUrl url( tr( "http://112.74.202.84:8080/XYJR/clientapi/getSysTime"));
+	QUrl url( tr( "http://112.74.208.141:8080/XYJR/clientapi/getSysTime"));
 	HttpClient::GetHttpClientInstance()->Request( url );
 
     emit CardRecharger::AllButtonEnable();
