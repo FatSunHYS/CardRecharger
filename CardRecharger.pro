@@ -21,7 +21,9 @@ SOURCES += main.cpp\
 HEADERS  += cardrecharger.h \
     iccarddriver.h \
     inifile.h \
-    httpclient.h
+    httpclient.h \
+    globalparameter.h \
+    sqlite3.h
 
 FORMS    += cardrecharger.ui
 

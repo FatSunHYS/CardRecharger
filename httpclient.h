@@ -20,9 +20,8 @@ private:
 	QHttp* HttpFD;
 	int RequestId;
 
+public:
 	explicit HttpClient(QObject *parent = 0);
-
-
 };
 
 #endif // HTTPCLIENT_H

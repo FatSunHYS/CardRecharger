@@ -8,6 +8,7 @@
 #include <termios.h>
 #include <errno.h>
 #include <string.h>
+#include "cardrecharger.h"
 
 #include <QObject>
 
@@ -50,7 +51,13 @@ public:
 				   unsigned char mode,
 				   unsigned char Delayms);
 
-
+    int init_dev();
+    int Open(CardRecharger* P_CardRe,
+             char* device,
+             unsigned char* CardMM,
+             unsigned char Mode,
+             unsigned char Secnum,
+             unsigned char type);
 private:
 
 	static const int speed_arr[ 16 ];
@@ -60,6 +67,16 @@ private:
 	int COM_FD;
 	fd_set fds;
 	struct timeval tv;
+
+    int speed;
+    char Serila_Dev[100];
+    unsigned char m_CardSecurityCode[6];
+    unsigned char m_CardSecurityMode;
+    unsigned char m_CardSectorNum;
+    unsigned char m_Cardtype;
+    CardRecharger* m_CardRcharger;
+    static void *SerialDevWRThreadFunc(void * lparam);
+public:
 
 	explicit ICCardDriver(QObject *parent = 0);
 	~ICCardDriver();
