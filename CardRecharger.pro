@@ -16,12 +16,16 @@ SOURCES += main.cpp\
         cardrecharger.cpp \
     iccarddriver.cpp \
     inifile.c \
-    httpclient.cpp
+    httpclient.cpp \
+    messagequeue.cpp \
+    messagequeuenode.cpp
 
 HEADERS  += cardrecharger.h \
     iccarddriver.h \
     inifile.h \
-    httpclient.h
+    httpclient.h \
+    messagequeue.h \
+    messagequeuenode.h
 
 FORMS    += cardrecharger.ui
 
