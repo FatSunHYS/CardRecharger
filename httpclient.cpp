@@ -1,12 +1,17 @@
 #include "httpclient.h"
 
 #include <QDebug>
+#include "messagequeue.h"
+#include "messagequeuenode.h"
+#include "messagehandling.h"
 
-void HttpClient::Request(QUrl &url)
+
+void HttpClient::Request(QUrl &url, int messagegroup )
 {
 	this->HttpFD->setHost( url.host(), url.port() );
 	this->RequestId = this->HttpFD->get( url.path() );
 	this->RequestAborted = false;
+	this->MessageGroupID = messagegroup;
 }
 
 
@@ -36,17 +41,28 @@ void HttpClient::ReadResponseHeader(const QHttpResponseHeader &responseHeader)
 
 void HttpClient::HttpDone(bool error)
 {
-	qDebug() << tr( "Request ID") << this->RequestId << tr( ": ") << endl;
+	MessageQueueNode* TemperoryNode = new MessageQueueNode();
+	TemperoryNode->MessageRequestID = this->RequestId;
+	TemperoryNode->IsError = error;
+	TemperoryNode->MessageGroupID = this->MessageGroupID;
+
+	//qDebug() << tr( "Request ID") << this->RequestId << tr( ": ") << endl;
 
 	if( error )
 	{
-		qDebug() << tr( "Error!") << qPrintable( this->HttpFD->errorString()) << endl;
+		//qDebug() << tr( "Error!") << qPrintable( this->HttpFD->errorString()) << endl;
 	}
 	else
 	{
 		QString TemperoryString( this->HttpFD->readAll() );
-		qDebug() << tr( "Received: ") << TemperoryString << endl;
+		//qDebug() << tr( "Received: ") << TemperoryString << endl;
+
+		TemperoryNode->MessageContent = TemperoryString;
 	}
+
+	MessageHandling::GetInstance()->MessageQueuePointer->MessageEnqueue( TemperoryNode );
+	TemperoryNode = NULL;
+
 }
 
 

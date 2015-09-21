@@ -6,6 +6,10 @@
 #include <QWSServer>
 #endif
 
+#include "messagehandling.h"
+
+MessageHandling* DebugMessageHandlingInstance;
+
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
@@ -20,9 +24,14 @@ int main(int argc, char *argv[])
     //QTextCodec::setCodecForLocale(QTextCodec::codecForName("UTF-8"));
     //QTextCodec::setCodecForCStrings(QTextCodec::codecForName("UTF-8"));
 
+	DebugMessageHandlingInstance = MessageHandling::GetInstance();
+	MessageHandling::GetInstance()->start();
+
     CardRecharger w;
     w.setWindowFlags( Qt::FramelessWindowHint );
     w.show();
 
-    return a.exec();
+
+
+	return a.exec();
 }

@@ -14,10 +14,10 @@ class MessageQueue : public QObject
 	Q_OBJECT
 public:
 	explicit MessageQueue(QObject *parent = 0);
-	MessageQueueNode dequeue();
-	void enqueue( const MessageQueueNode& node );
-	MessageQueueNode head();
-	bool IsEmpty();
+	MessageQueueNode* MessageDequeue();
+	void MessageEnqueue( MessageQueueNode* node );
+	MessageQueueNode* MessageHead();
+	bool QueueIsEmpty();
 
 signals:
 
@@ -25,10 +25,13 @@ public slots:
 
 
 private:
-	QQueue<MessageQueueNode> Messages;
+	QQueue<MessageQueueNode*> Messages;
 	QMutex MessageMutex;
 
 
 };
+
+
+
 
 #endif // MESSAGEQUEUE_H

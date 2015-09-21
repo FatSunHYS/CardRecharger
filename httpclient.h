@@ -9,8 +9,10 @@ class HttpClient : public QObject
 {
 	Q_OBJECT
 public:
+
+
 	explicit HttpClient(QObject *parent = 0);
-	void Request( QUrl& url );
+	void Request( QUrl& url, int messagegroup );
 
 signals:
 
@@ -24,6 +26,7 @@ private:
 	QHttp* HttpFD;
 	int RequestId;
 	bool RequestAborted;
+	int MessageGroupID;
 
 };
 

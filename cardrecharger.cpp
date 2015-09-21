@@ -4,6 +4,7 @@
 #include <QMessageBox>
 
 #include "httpclient.h"
+#include "messagequeuenode.h"
 
 HttpClient TemperoryClient;
 
@@ -24,8 +25,8 @@ void CardRecharger::on_Recharge5Button_clicked()
 
     emit CardRecharger::AllButtonDisable();
     QMessageBox::information( this, "a", "5" );
-	QUrl url( tr( "http://112.74.208.141:8080/XYJR/clientapi/getSysTime"));
-	TemperoryClient.Request( url );
+	QUrl url( tr( "http://112.74.202.84:8080/jeefw/clientapi/getSysTime"));
+	TemperoryClient.Request( url, MessageQueueNode::RechargerMessages );
 
     emit CardRecharger::AllButtonEnable();
 }

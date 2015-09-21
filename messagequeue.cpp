@@ -1,28 +1,39 @@
 #include "messagequeue.h"
 
+MessageQueue::MessageQueue(QObject *parent ) : QObject( parent )
+{
 
-MessageQueueNode MessageQueue::dequeue()
+}
+
+MessageQueueNode* MessageQueue::MessageDequeue()
 {
 	QMutexLocker TemperoryLocker( &this->MessageMutex );
 
-	return this->Messages.dequeue();
+	if( this->Messages.isEmpty() )
+	{
+		return NULL;
+	}
+	else
+	{
+		return this->Messages.dequeue();
+	}
 }
 
-void MessageQueue::enqueue(const MessageQueueNode &node)
+void MessageQueue::MessageEnqueue( MessageQueueNode* node)
 {
 	QMutexLocker TemperoryLocker( &this->MessageMutex );
 
 	this->Messages.enqueue( node );
 }
 
-MessageQueueNode MessageQueue::head()
+MessageQueueNode* MessageQueue::MessageHead()
 {
 	QMutexLocker TemperoryLocker( &this->MessageMutex );
 
 	return this->Messages.head();
 }
 
-bool MessageQueue::IsEmpty()
+bool MessageQueue::QueueIsEmpty()
 {
 	QMutexLocker TemperoryLocker( &this->MessageMutex );
 
