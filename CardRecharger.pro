@@ -19,7 +19,10 @@ SOURCES += main.cpp\
     httpclient.cpp \
     messagequeue.cpp \
     messagequeuenode.cpp \
-    messagehandling.cpp
+    messagehandling.cpp \
+    rechargerhandling.cpp \
+    timestamphandling.cpp \
+    cJSON.c
 
 HEADERS  += cardrecharger.h \
     iccarddriver.h \
@@ -27,7 +30,10 @@ HEADERS  += cardrecharger.h \
     httpclient.h \
     messagequeue.h \
     messagequeuenode.h \
-    messagehandling.h
+    messagehandling.h \
+    rechargerhandling.h \
+    timestamphandling.h \
+    cJSON.h
 
 FORMS    += cardrecharger.ui
 

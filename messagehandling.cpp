@@ -1,7 +1,14 @@
 #include <QDebug>
 
-#include "messagehandling.h"
+#include <stdlib.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <string.h>
+using namespace std;
 
+#include "messagehandling.h"
+#include "timestamphandling.h"
+#include "cJSON.h"
 
 MessageHandling* MessageHandling::PrivateInstance = NULL;
 
@@ -39,13 +46,13 @@ void MessageHandling::run()
 
 		switch( TemperoryMessage->MessageGroupID )
 		{
-			case MessageQueueNode::RechargerMessages:
+			case MessageHandling::RechargerMessages:
 			{
 				this->ParsingRechargerMessages( TemperoryMessage );
 				break;
 			}
 
-			case MessageQueueNode::AdvertisementMessages:
+			case MessageHandling::AdvertisementMessages:
 			{
 				break;
 			}
@@ -65,6 +72,8 @@ void MessageHandling::run()
 
 void MessageHandling::ParsingRechargerMessages( MessageQueueNode* message )
 {
+	char timestampbuffer[ 100 ];
+
 	qDebug() << tr( "ParsingRechargerMessages:" ) << message->MessageRequestID;
 	qDebug() << tr( "IsError:") << message->IsError;
 
@@ -76,4 +85,57 @@ void MessageHandling::ParsingRechargerMessages( MessageQueueNode* message )
 	{
 		qDebug() << message->MessageContent << endl;
 	}
+
+
+	switch( message->MessageAppID )
+	{
+		case MessageHandling::GetSysTime:
+		{
+			strcpy( timestampbuffer, message->MessageContent.toUtf8().data() );
+			cJSON* root = cJSON_Parse( timestampbuffer );
+			long int tempint = ( long int )( cJSON_GetObjectItem( root, "timestamp" )->valuedouble );
+
+			//qDebug() << tr( "tempint = " ) << tempint;
+
+			TimestampHandling::GetInstance()->CalibrateTimestamp( tempint );
+
+			break;
+		}
+
+		default:
+		{
+			qDebug() << tr( "MessageAppID Error!" );
+		}
+	}
+
+
+
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -7,6 +7,7 @@
 #endif
 
 #include "messagehandling.h"
+#include "timestamphandling.h"
 
 MessageHandling* DebugMessageHandlingInstance;
 
@@ -26,6 +27,7 @@ int main(int argc, char *argv[])
 
 	DebugMessageHandlingInstance = MessageHandling::GetInstance();
 	MessageHandling::GetInstance()->start();
+	TimestampHandling::GetInstance()->start();
 
     CardRecharger w;
     w.setWindowFlags( Qt::FramelessWindowHint );

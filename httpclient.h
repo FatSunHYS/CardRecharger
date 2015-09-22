@@ -12,7 +12,8 @@ public:
 
 
 	explicit HttpClient(QObject *parent = 0);
-	void Request( QUrl& url, int messagegroup );
+	void RequestGet( QUrl& url, int messagegroup, int messageappid );
+	void RequestPost( QUrl& url, QString postdata, int messagegroup, int messageappid );
 
 signals:
 
@@ -27,6 +28,7 @@ private:
 	int RequestId;
 	bool RequestAborted;
 	int MessageGroupID;
+	int MessageAppID;
 
 };
 

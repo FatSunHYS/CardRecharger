@@ -6,8 +6,6 @@
 #include "httpclient.h"
 #include "messagequeuenode.h"
 
-HttpClient TemperoryClient;
-
 CardRecharger::CardRecharger(QWidget *parent) :
 	QDialog(parent),
 	ui(new Ui::CardRecharger)
@@ -25,9 +23,6 @@ void CardRecharger::on_Recharge5Button_clicked()
 
     emit CardRecharger::AllButtonDisable();
     QMessageBox::information( this, "a", "5" );
-	QUrl url( tr( "http://112.74.202.84:8080/jeefw/clientapi/getSysTime"));
-	TemperoryClient.Request( url, MessageQueueNode::RechargerMessages );
-
     emit CardRecharger::AllButtonEnable();
 }
 

@@ -6,13 +6,25 @@
 #include "messagehandling.h"
 
 
-void HttpClient::Request(QUrl &url, int messagegroup )
+void HttpClient::RequestGet(QUrl &url, int messagegroup, int messageappid )
 {
 	this->HttpFD->setHost( url.host(), url.port() );
 	this->RequestId = this->HttpFD->get( url.path() );
 	this->RequestAborted = false;
 	this->MessageGroupID = messagegroup;
+	this->MessageAppID = messageappid;
 }
+
+
+void HttpClient::RequestPost(QUrl &url, QString postdata, int messagegroup, int messageappid )
+{
+	this->HttpFD->setHost( url.host(), url.port() );
+	this->RequestId = this->HttpFD->post( url.path(), postdata.toUtf8() );
+	this->RequestAborted = false;
+	this->MessageGroupID = messagegroup;
+	this->MessageAppID = messageappid;
+}
+
 
 
 HttpClient::HttpClient(QObject *parent) : QObject(parent)
@@ -45,6 +57,7 @@ void HttpClient::HttpDone(bool error)
 	TemperoryNode->MessageRequestID = this->RequestId;
 	TemperoryNode->IsError = error;
 	TemperoryNode->MessageGroupID = this->MessageGroupID;
+	TemperoryNode->MessageAppID = this->MessageAppID;
 
 	//qDebug() << tr( "Request ID") << this->RequestId << tr( ": ") << endl;
 
