@@ -23,8 +23,8 @@ public:
 	static TimestampHandling* GetInstance();
 	bool IsTimestampInitialized();
 	void TimestampReset();
-	void CalibrateTimestamp( long int newtimestamp );
-	long int GetTimestamp();
+	void CalibrateTimestamp( double newtimestamp );
+	double GetTimestamp();
 
 protected:
 	void run();
@@ -36,10 +36,10 @@ public slots:
 private:
 	static TimestampHandling* PrivateInstace;
 	bool TimestampIsInitialized;
-	QMutex TimestampInitialMutex;
+	//QMutex TimestampInitialMutex;
 	HttpClient TimestampClient;
-	long int unixtimestamp;
-	QMutex TimestampChangeMutex;
+	double unixtimestamp;
+	//QMutex TimestampChangeMutex;
 
 	explicit TimestampHandling(QObject *parent = 0);
 

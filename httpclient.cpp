@@ -42,10 +42,12 @@ HttpClient::HttpClient(QObject *parent) : QObject(parent)
 
 void HttpClient::ReadResponseHeader(const QHttpResponseHeader &responseHeader)
 {
+	qDebug() << tr( "HttpClient StatusCode: ") << responseHeader.statusCode();
+
 	if( responseHeader.statusCode() != 200 )
 	{
-		qDebug() << tr( "Request ID") << this->RequestId << tr( ": ") << endl;
-		qDebug() << tr( "Download Failed: %1.").arg( responseHeader.reasonPhrase() ) << endl;
+		qDebug() << tr( "Request ID") << tr( ": ") << this->RequestId;
+		qDebug() << tr( "Download Failed: %1.").arg( responseHeader.reasonPhrase() );
 		this->RequestAborted = true;
 		this->HttpFD->abort();
 	}
@@ -64,6 +66,8 @@ void HttpClient::HttpDone(bool error)
 	if( error )
 	{
 		//qDebug() << tr( "Error!") << qPrintable( this->HttpFD->errorString()) << endl;
+
+		TemperoryNode->MessageContent = this->HttpFD->errorString();
 	}
 	else
 	{

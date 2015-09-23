@@ -33,6 +33,7 @@ void TimestampHandling::run()
 	int TimeoutCounter;
 
 	QUrl url( tr( "http://112.74.202.84:8080/jeefw/clientapi/getSysTime" ) );
+	qDebug() << url.toString();
 
 	while( true )
 	{
@@ -61,10 +62,10 @@ void TimestampHandling::run()
 		for( int i = 0; i < 86400; ++i )
 		{
 			sleep( 1 );
-			this->TimestampChangeMutex.lock();
+			//this->TimestampChangeMutex.lock();
 			this->unixtimestamp += 1000;
-			this->TimestampChangeMutex.unlock();
-			qDebug() << "current time: " << this->GetTimestamp();
+			//this->TimestampChangeMutex.unlock();
+			qDebug() << "current time: " << QString::number( this->GetTimestamp(), '.', 0 );
 		}
 
 	}
@@ -78,7 +79,7 @@ void TimestampHandling::run()
  */
 bool TimestampHandling::IsTimestampInitialized()
 {
-	QMutexLocker TemperoryLocker( &this->TimestampInitialMutex );
+	//QMutexLocker TemperoryLocker( &this->TimestampInitialMutex );
 
 	return this->TimestampIsInitialized;
 }
@@ -86,28 +87,26 @@ bool TimestampHandling::IsTimestampInitialized()
 
 void TimestampHandling::TimestampReset()
 {
-	QMutexLocker TemperoryLocker( &this->TimestampInitialMutex );
+	//QMutexLocker TemperoryLocker( &this->TimestampInitialMutex );
 	this->TimestampIsInitialized = false;
 }
 
 
 
-void TimestampHandling::CalibrateTimestamp(long int newtimestamp)
+void TimestampHandling::CalibrateTimestamp(double newtimestamp)
 {
-	QMutexLocker TemperoryLocker( &this->TimestampInitialMutex );
+	//QMutexLocker TemperoryLocker1( &this->TimestampInitialMutex );
+	//QMutexLocker TemperoryLocker2( &this->TimestampChangeMutex );
 
-	this->TimestampChangeMutex.lock();
 	this->unixtimestamp = newtimestamp;
-	qDebug() << tr( "unix timestamp: " ) << newtimestamp ;
-	this->TimestampChangeMutex.unlock();
+	qDebug() << tr( "unix timestamp: " ) << QString::number( newtimestamp, '.', 0 );
 
 	this->TimestampIsInitialized = true;
 }
 
-
-long int TimestampHandling::GetTimestamp()
+double TimestampHandling::GetTimestamp()
 {
-	QMutexLocker TemperoryLocker( &this->TimestampInitialMutex );
+	//QMutexLocker TemperoryLocker( &this->TimestampChangeMutex );
 
 	return this->unixtimestamp;
 }

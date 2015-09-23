@@ -72,14 +72,15 @@ void MessageHandling::run()
 
 void MessageHandling::ParsingRechargerMessages( MessageQueueNode* message )
 {
-	char timestampbuffer[ 100 ];
+	char timestampbuffer[ 1024 ];
 
 	qDebug() << tr( "ParsingRechargerMessages:" ) << message->MessageRequestID;
 	qDebug() << tr( "IsError:") << message->IsError;
 
 	if( message->IsError )
 	{
-		qDebug() << tr( "error") << endl;
+		qDebug() << message->MessageContent << endl;
+		return;
 	}
 	else
 	{
@@ -93,8 +94,8 @@ void MessageHandling::ParsingRechargerMessages( MessageQueueNode* message )
 		{
 			strcpy( timestampbuffer, message->MessageContent.toUtf8().data() );
 			cJSON* root = cJSON_Parse( timestampbuffer );
-			long int tempint = ( long int )( cJSON_GetObjectItem( root, "timestamp" )->valuedouble );
-
+			double tempint = cJSON_GetObjectItem( root, "timestamp" )->valuedouble;
+			cJSON_Delete( root );
 			//qDebug() << tr( "tempint = " ) << tempint;
 
 			TimestampHandling::GetInstance()->CalibrateTimestamp( tempint );
@@ -105,6 +106,7 @@ void MessageHandling::ParsingRechargerMessages( MessageQueueNode* message )
 		default:
 		{
 			qDebug() << tr( "MessageAppID Error!" );
+			return;
 		}
 	}
 
