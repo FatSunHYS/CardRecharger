@@ -1,10 +1,10 @@
-#include "timestamphandling.h"
-
 #include <QDebug>
 
 #include <time.h>
 #include <sys/time.h>
 
+#include "timestamphandling.h"
+#include "cardrecharger.h"
 #include "messagehandling.h"
 
 TimestampHandling* TimestampHandling::PrivateInstace = NULL;
@@ -31,6 +31,7 @@ TimestampHandling* TimestampHandling::GetInstance()
 void TimestampHandling::run()
 {
 	int TimeoutCounter;
+	bool ButtonFirstEnable = false;
 
 	QUrl url( tr( "http://112.74.202.84:8080/jeefw/clientapi/getSysTime" ) );
 	qDebug() << url.toString();
@@ -41,7 +42,7 @@ void TimestampHandling::run()
 		this->TimestampClient.RequestGet( url, MessageHandling::RechargerMessages, MessageHandling::GetSysTime );
 
 		TimeoutCounter = 0;
-		while( this->IsTimestampInitialized() == false )
+		while( this->TimestampIsInitialized == false )
 		{
 			sleep( 1 );
 			++TimeoutCounter;
@@ -58,13 +59,24 @@ void TimestampHandling::run()
 
 		qDebug() << tr( "calibrate successfully.");
 
+		if( ButtonFirstEnable == false )
+		{
+			ButtonFirstEnable = true;
+			CardRecharger::SelfInstance->AllButtonEnable();
+#ifdef CHINESE_OUTPUT
+			CardRecharger::SelfInstance->SetStatusLabel( tr( "请点击充值金额"));
+#else
+			CardRecharger::SelfInstance->SetStatusLabel( tr( "Click the recharger button to recharge"));
+#endif
+
+			qDebug() << tr( "All Button is Enable." );
+
+		}
 
 		for( int i = 0; i < 86400; ++i )
 		{
 			sleep( 1 );
-			//this->TimestampChangeMutex.lock();
 			this->unixtimestamp += 1000;
-			//this->TimestampChangeMutex.unlock();
 			qDebug() << "current time: " << QString::number( this->GetTimestamp(), '.', 0 );
 		}
 
@@ -74,30 +86,9 @@ void TimestampHandling::run()
 }
 
 
-/*
- * If the timestamp is initialized, return true.
- */
-bool TimestampHandling::IsTimestampInitialized()
-{
-	//QMutexLocker TemperoryLocker( &this->TimestampInitialMutex );
-
-	return this->TimestampIsInitialized;
-}
-
-
-void TimestampHandling::TimestampReset()
-{
-	//QMutexLocker TemperoryLocker( &this->TimestampInitialMutex );
-	this->TimestampIsInitialized = false;
-}
-
-
 
 void TimestampHandling::CalibrateTimestamp(double newtimestamp)
 {
-	//QMutexLocker TemperoryLocker1( &this->TimestampInitialMutex );
-	//QMutexLocker TemperoryLocker2( &this->TimestampChangeMutex );
-
 	this->unixtimestamp = newtimestamp;
 	qDebug() << tr( "unix timestamp: " ) << QString::number( newtimestamp, '.', 0 );
 
@@ -106,8 +97,6 @@ void TimestampHandling::CalibrateTimestamp(double newtimestamp)
 
 double TimestampHandling::GetTimestamp()
 {
-	//QMutexLocker TemperoryLocker( &this->TimestampChangeMutex );
-
 	return this->unixtimestamp;
 }
 

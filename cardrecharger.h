@@ -12,8 +12,15 @@ class CardRecharger : public QDialog
 	Q_OBJECT
 
 public:
+	static CardRecharger* SelfInstance;
+
 	explicit CardRecharger(QWidget *parent = 0);
 	~CardRecharger();
+
+	void AllButtonEnable();
+	void AllButtonDisable();
+	void SetStatusLabel( QString newstatus );
+
 
 private slots:
     void on_Recharge5Button_clicked();
@@ -36,11 +43,9 @@ private slots:
 
     void on_GreyRecordButton_clicked();
 
-    void AllButtonEnable();
-    void AllButtonDisable();
-
 private:
 	Ui::CardRecharger *ui;
+
 };
 
 #endif // CARDRECHARGER_H

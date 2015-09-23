@@ -11,6 +11,8 @@
 
 MessageHandling* DebugMessageHandlingInstance;
 
+
+
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
@@ -21,17 +23,18 @@ int main(int argc, char *argv[])
 
 	//changed.
 
-    //QTextCodec::setCodecForTr(QTextCodec::codecForName("UTF-8"));
-    //QTextCodec::setCodecForLocale(QTextCodec::codecForName("UTF-8"));
-    //QTextCodec::setCodecForCStrings(QTextCodec::codecForName("UTF-8"));
+	QTextCodec::setCodecForTr(QTextCodec::codecForName("UTF-8"));
+	QTextCodec::setCodecForLocale(QTextCodec::codecForName("UTF-8"));
+	QTextCodec::setCodecForCStrings(QTextCodec::codecForName("UTF-8"));
 
 	DebugMessageHandlingInstance = MessageHandling::GetInstance();
 	MessageHandling::GetInstance()->start();
 	TimestampHandling::GetInstance()->start();
 
-    CardRecharger w;
-    w.setWindowFlags( Qt::FramelessWindowHint );
-    w.show();
+	CardRecharger w;
+	CardRecharger::SelfInstance = &w;
+	w.setWindowFlags( Qt::FramelessWindowHint );
+	w.show();
 
 
 

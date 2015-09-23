@@ -41,3 +41,4 @@ FORMS    += cardrecharger.ui
 LIBS += -lpthread
 
 #DEFINES += EMBEDDED_BOARD
+#DEFINES += CHINESE_OUTPUT

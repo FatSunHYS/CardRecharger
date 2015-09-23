@@ -10,8 +10,6 @@
 
 #include <QObject>
 #include <QThread>
-#include <QMutex>
-#include <QMutexLocker>
 
 #include "httpclient.h"
 
@@ -21,8 +19,6 @@ class TimestampHandling : public QThread
 	Q_OBJECT
 public:
 	static TimestampHandling* GetInstance();
-	bool IsTimestampInitialized();
-	void TimestampReset();
 	void CalibrateTimestamp( double newtimestamp );
 	double GetTimestamp();
 
@@ -36,10 +32,8 @@ public slots:
 private:
 	static TimestampHandling* PrivateInstace;
 	bool TimestampIsInitialized;
-	//QMutex TimestampInitialMutex;
 	HttpClient TimestampClient;
 	double unixtimestamp;
-	//QMutex TimestampChangeMutex;
 
 	explicit TimestampHandling(QObject *parent = 0);
 
