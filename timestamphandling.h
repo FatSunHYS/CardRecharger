@@ -21,6 +21,7 @@ public:
 	static TimestampHandling* GetInstance();
 	void CalibrateTimestamp( double newtimestamp );
 	double GetTimestamp();
+	bool IsFirstInitialed();
 
 protected:
 	void run();
@@ -34,6 +35,7 @@ private:
 	bool TimestampIsInitialized;
 	HttpClient TimestampClient;
 	double unixtimestamp;
+	bool FirstInitialed;
 
 	explicit TimestampHandling(QObject *parent = 0);
 

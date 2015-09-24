@@ -6,13 +6,13 @@
 #include <QMutex>
 #include <QMutexLocker>
 
+#include "httpclient.h"
+
 class RechargerHandling : public QThread
 {
 	Q_OBJECT
 public:
 	static RechargerHandling* GetInstance();
-
-	void GetServerTimeSuccessfully();
 
 
 protected:
@@ -24,7 +24,7 @@ public slots:
 
 private:
 	static RechargerHandling* PrivateInstance;
-	bool IsClientGetServerTime;
+	HttpClient RechargerClient;
 
 	explicit RechargerHandling( QObject* parent = 0 );
 

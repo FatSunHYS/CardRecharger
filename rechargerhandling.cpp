@@ -1,15 +1,15 @@
-#include "rechargerhandling.h"
-#include "httpclient.h"
-#include "messagehandling.h"
+#include <QCryptographicHash>
 
-#include <sys/time.h>
+#include "rechargerhandling.h"
+#include "timestamphandling.h"
+#include "messagehandling.h"
+#include "cardrecharger.h"
 
 
 RechargerHandling* RechargerHandling::PrivateInstance = NULL;
 
 RechargerHandling::RechargerHandling(QObject *parent) : QThread( parent )
 {
-	this->IsClientGetServerTime = false;
 }
 
 
@@ -25,25 +25,35 @@ RechargerHandling* RechargerHandling::GetInstance()
 
 void RechargerHandling::run()
 {
-	//HttpClient RechargerClient;
-
-	/* Step 1, get the server system time. */
 
 
 
+	/* wait for timestamp initialized. */
+	while( TimestampHandling::GetInstance()->IsFirstInitialed() == false )
+	{
 
+	}
+
+
+	/* log in the server. */
+	qDebug() << tr( "ready to log in the server." );
+	double CurrentTimestamp = TimestampHandling::GetInstance()->GetTimestamp();
+	QString CurrentTimestampString = QString::number( CurrentTimestamp, '.', 0 );
+	QString secret = CardRecharger::SelfInstance->CardRechargerClientPassword.toLower();
 
 
 	while( true )
 	{
+
+
+
+
+
+
+
 
 	}
 
 
 }
 
-
-void RechargerHandling::GetServerTimeSuccessfully()
-{
-
-}

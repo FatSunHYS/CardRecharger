@@ -13,6 +13,9 @@ class CardRecharger : public QDialog
 
 public:
 	static CardRecharger* SelfInstance;
+	QString CardRechargerClientID;
+	QString CardRechargerClientPassword;
+	QString CardRechargerServerURL;
 
 	explicit CardRecharger(QWidget *parent = 0);
 	~CardRecharger();

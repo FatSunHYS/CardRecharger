@@ -22,7 +22,8 @@ SOURCES += main.cpp\
     messagehandling.cpp \
     rechargerhandling.cpp \
     timestamphandling.cpp \
-    cJSON.c
+    cJSON.c \
+    errordialog.cpp
 
 HEADERS  += cardrecharger.h \
     iccarddriver.h \
@@ -33,9 +34,11 @@ HEADERS  += cardrecharger.h \
     messagehandling.h \
     rechargerhandling.h \
     timestamphandling.h \
-    cJSON.h
+    cJSON.h \
+    errordialog.h
 
-FORMS    += cardrecharger.ui
+FORMS    += cardrecharger.ui \
+    errordialog.ui
 
 
 LIBS += -lpthread
