@@ -9,6 +9,8 @@
 
 TimestampHandling* TimestampHandling::PrivateInstace = NULL;
 
+static HttpClient* TimestampClient;
+
 TimestampHandling::TimestampHandling(QObject *parent) : QThread(parent)
 {
 	this->TimestampIsInitialized = false;
@@ -23,6 +25,7 @@ TimestampHandling* TimestampHandling::GetInstance()
 	if( TimestampHandling::PrivateInstace == NULL )
 	{
 		TimestampHandling::PrivateInstace = new TimestampHandling();
+		TimestampClient = new HttpClient();
 	}
 
 	return TimestampHandling::PrivateInstace;
@@ -42,7 +45,7 @@ void TimestampHandling::run()
 	while( true )
 	{
 		this->TimestampIsInitialized = false;
-		this->TimestampClient.RequestGet( url, MessageHandling::RechargerMessages, MessageHandling::GetSysTime );
+		TimestampClient->RequestGet( url, MessageHandling::RechargerMessages, MessageHandling::GetSysTime );
 
 		TimeoutCounter = 0;
 

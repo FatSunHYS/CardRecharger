@@ -19,7 +19,8 @@ public:
 
 	enum
 	{
-		GetSysTime = 0
+		GetSysTime = 0,
+		Login
 	}MessageAppID;
 
 	MessageQueue* MessageQueuePointer;

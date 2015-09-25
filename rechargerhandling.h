@@ -5,6 +5,7 @@
 #include <QThread>
 #include <QMutex>
 #include <QMutexLocker>
+#include <QCryptographicHash>
 
 #include "httpclient.h"
 
@@ -25,7 +26,7 @@ public slots:
 private:
 	static RechargerHandling* PrivateInstance;
 	HttpClient RechargerClient;
-
+	QCryptographicHash* EncrpytMD5;
 	explicit RechargerHandling( QObject* parent = 0 );
 
 

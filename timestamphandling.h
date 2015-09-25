@@ -13,7 +13,6 @@
 
 #include "httpclient.h"
 
-
 class TimestampHandling : public QThread
 {
 	Q_OBJECT
@@ -33,7 +32,6 @@ public slots:
 private:
 	static TimestampHandling* PrivateInstace;
 	bool TimestampIsInitialized;
-	HttpClient TimestampClient;
 	double unixtimestamp;
 	bool FirstInitialed;
 
