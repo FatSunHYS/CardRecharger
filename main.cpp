@@ -16,6 +16,7 @@
 #include "inifile.h"
 
 MessageHandling* DebugMessageHandlingInstance;
+TimestampHandling* DebugTimestampHandlingInstance;
 HttpClient* DebugHttpClient;
 
 bool SystemInitialization();
@@ -46,7 +47,11 @@ int main(int argc, char *argv[])
 	if( SystemInitialization() )
 	//if( 0 )
 	{
+		//TimestampHttpClient = new HttpClient();
+
+
 		DebugMessageHandlingInstance = MessageHandling::GetInstance();
+		DebugTimestampHandlingInstance = TimestampHandling::GetInstance();
 		MessageHandling::GetInstance()->start();
 		TimestampHandling::GetInstance()->start();
 		RechargerHandling::GetInstance()->start();

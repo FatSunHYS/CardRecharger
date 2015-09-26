@@ -7,9 +7,9 @@
 #include "cardrecharger.h"
 #include "messagehandling.h"
 
-TimestampHandling* TimestampHandling::PrivateInstace = NULL;
+//HttpClient* TimestampHttpClient;
 
-static HttpClient* TimestampClient;
+TimestampHandling* TimestampHandling::PrivateInstace = NULL;
 
 TimestampHandling::TimestampHandling(QObject *parent) : QThread(parent)
 {
@@ -25,7 +25,6 @@ TimestampHandling* TimestampHandling::GetInstance()
 	if( TimestampHandling::PrivateInstace == NULL )
 	{
 		TimestampHandling::PrivateInstace = new TimestampHandling();
-		TimestampClient = new HttpClient();
 	}
 
 	return TimestampHandling::PrivateInstace;
@@ -37,6 +36,13 @@ void TimestampHandling::run()
 	int TimeoutCounter;
 	bool ButtonFirstEnable = false;
 	int CalibrateErrorCounter;
+	QNetworkAccessManager TimestampHttpFD;
+	QNetworkRequest TimestampHttpRequest;
+
+	this->HttpFD = &TimestampHttpFD;
+	this->HttpRequest = &TimestampHttpRequest;
+
+	connect( &TimestampHttpFD, SIGNAL(finished(QNetworkReply*)), this, SLOT(ReplyFinish(QNetworkReply*)) );
 
 	QUrl url( CardRecharger::SelfInstance->CardRechargerServerURL + tr( "/clientapi/getSysTime" ) );
 	qDebug() << url.toString();
@@ -45,7 +51,12 @@ void TimestampHandling::run()
 	while( true )
 	{
 		this->TimestampIsInitialized = false;
-		TimestampClient->RequestGet( url, MessageHandling::RechargerMessages, MessageHandling::GetSysTime );
+		//TimestampClient->RequestGet( url, MessageHandling::RechargerMessages, MessageHandling::GetSysTime );
+		//this->HttpRequest->setUrl( url );
+		//this->HttpFD->get( *( this->HttpRequest ) );
+		//TimestampHttpClient->RequestGet( url, MessageHandling::RechargerMessages, MessageHandling::GetSysTime );
+		HttpRequest->setUrl( url );
+		HttpFD->get( TimestampHttpRequest );
 
 		TimeoutCounter = 0;
 
@@ -125,4 +136,61 @@ bool TimestampHandling::IsFirstInitialed()
 {
 	return this->FirstInitialed;
 }
+
+
+
+void TimestampHandling::ReplyFinish(QNetworkReply *reply)
+{
+	MessageQueueNode* TemperoryNode = new MessageQueueNode();
+	TemperoryNode->MessageGroupID = MessageHandling::RechargerMessages;
+	TemperoryNode->MessageAppID = MessageHandling::GetSysTime;
+
+	//qDebug() << tr( "Request ID") << this->RequestId << tr( ": ") << endl;
+	qDebug() << tr( "reply url : " ) << reply->url().toString();
+
+
+	if( reply->error() != QNetworkReply::NoError )
+	{
+		//qDebug() << tr( "Error!") << qPrintable( this->HttpFD->errorString()) << endl;
+		TemperoryNode->IsError = true;
+		TemperoryNode->MessageContent = reply->errorString();
+	}
+	else
+	{
+		QString TemperoryString( reply->readAll() );
+		//qDebug() << tr( "Received: ") << TemperoryString << endl;
+		TemperoryNode->IsError = false;
+		TemperoryNode->MessageContent = TemperoryString;
+	}
+
+	MessageHandling::GetInstance()->MessageQueuePointer->MessageEnqueue( TemperoryNode );
+	TemperoryNode = NULL;
+
+	reply->deleteLater();
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

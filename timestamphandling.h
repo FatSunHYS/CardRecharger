@@ -10,8 +10,7 @@
 
 #include <QObject>
 #include <QThread>
-
-#include "httpclient.h"
+#include <QtNetwork>
 
 class TimestampHandling : public QThread
 {
@@ -29,14 +28,24 @@ signals:
 
 public slots:
 
+private slots:
+	void ReplyFinish( QNetworkReply* reply );
+
 private:
 	static TimestampHandling* PrivateInstace;
+	QNetworkAccessManager* HttpFD;
+	QNetworkRequest* HttpRequest;
 	bool TimestampIsInitialized;
 	double unixtimestamp;
 	bool FirstInitialed;
 
 	explicit TimestampHandling(QObject *parent = 0);
 
+
 };
+
+
+//extern HttpClient* TimestampHttpClient;
+
 
 #endif // TIMESTAMPHANDLING_H
