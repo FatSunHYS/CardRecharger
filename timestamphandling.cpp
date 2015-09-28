@@ -1,15 +1,21 @@
 #include <QObject>
 #include <QDebug>
 #include <QUrl>
+#include <QString>
 
 #include <time.h>
 #include <sys/time.h>
 #include <stdlib.h>
+#include <string>
 #include <unistd.h>
+#include <iostream>
+using namespace std;
 
 #include "timestamphandling.h"
 #include "cardrecharger.h"
 #include "messagehandling.h"
+#include "messagequeue.h"
+#include "messagequeuenode.h"
 
 
 TimestampHandling* TimestampHandling::PrivateInstace = NULL;
@@ -19,7 +25,6 @@ TimestampHandling::TimestampHandling()
 	this->TimestampIsRefreshed = false;
 	this->unixtimestamp = 0;
 	this->FirstInitialed = false;
-	this->TimestampClient = NULL;
 }
 
 
@@ -41,7 +46,9 @@ void* TimestampHandler( void* arg )
 	bool ButtonFirstEnable = false;
 	int CalibrateErrorCounter;
 	TimestampHandling* Handler = TimestampHandling::GetInstance();
-	CURLcode requestresult;
+	CURLcode RequestResult;
+	QString RespondContent;
+	MessageQueueNode* TemperoryNode;
 
 	if( arg != NULL )
 	{
@@ -57,30 +64,32 @@ void* TimestampHandler( void* arg )
 	while( true )
 	{
 		Handler->SetTimestampRefreshState( false );
-		//TimestampClient->RequestGet( url, MessageHandling::RechargerMessages, MessageHandling::GetSysTime );
-		//this->HttpRequest->setUrl( url );
-		//this->HttpFD->get( *( this->HttpRequest ) );
-		//TimestampHttpClient->RequestGet( url, MessageHandling::RechargerMessages, MessageHandling::GetSysTime );
 
-		Handler->TimestampClient = curl_easy_init();
+		RequestResult = Handler->TimestampClient.RequestGet( url, RespondContent );
 
-		if( Handler->TimestampClient == NULL )
+		//qDebug() << QObject::tr( "request result = " ) << requestresult;
+		//qDebug() << QObject::tr( "test buffer = " ) << QString::fromStdString( ReceiveContent );
+
+		TemperoryNode = new MessageQueueNode();
+		TemperoryNode->MessageGroupID = MessageHandling::RechargerMessages;
+		TemperoryNode->MessageAppID = MessageHandling::GetSysTime;
+
+		if( RequestResult == CURLE_OK )
 		{
-			qDebug() << QObject::tr( "TimestampClient initilized fail. Try again after 3 seconds." );
-			curl_easy_cleanup( Handler->TimestampClient );
-			sleep( 3 );
-			continue;
+
+			TemperoryNode->IsError = false;
+			TemperoryNode->MessageContent = RespondContent;
+		}
+		else
+		{
+
+			TemperoryNode->IsError = true;
+			TemperoryNode->MessageContent = QObject::tr( "NULL" );
 		}
 
-		curl_easy_setopt( Handler->TimestampClient, CURLOPT_URL, url.toString().toUtf8().data() );
-		curl_easy_setopt( Handler->TimestampClient, CURLOPT_NOSIGNAL, 1 );
-		requestresult = curl_easy_perform( Handler->TimestampClient );
-		qDebug() << QObject::tr( "request result = " ) << requestresult;
-		curl_easy_cleanup( Handler->TimestampClient );
+		MessageHandling::GetInstance()->MessageQueuePointer->MessageEnqueue( TemperoryNode );
+		TemperoryNode = NULL;
 
-
-
-#if 0
 		TimeoutCounter = 0;
 
 		while( Handler->GetTimestampRefreshState() == false )
@@ -107,7 +116,6 @@ void* TimestampHandler( void* arg )
 			}
 			continue;
 		}
-#endif
 
 		qDebug() << QObject::tr( "calibrate successfully.");
 		CalibrateErrorCounter = 0;
@@ -201,10 +209,6 @@ void TimestampHandling::RefreshTimestamp()
 {
 	this->unixtimestamp += 1000;
 }
-
-
-
-
 
 
 

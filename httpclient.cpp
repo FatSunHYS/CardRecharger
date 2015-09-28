@@ -1,117 +1,62 @@
+#include <QObject>
+#include <QDebug>
+
 #include "httpclient.h"
 
-#include <QDebug>
-#include "messagequeue.h"
-#include "messagequeuenode.h"
-#include "messagehandling.h"
 
 
-
-void HttpClient::RequestGet(QUrl &url, int messagegroup, int messageappid )
+CURLcode HttpClient::RequestGet( QUrl& url, QString& RespondContent )
 {
+	CURLcode requestresult;
+	std::string TemperoryContent;
 
-	this->HttpFD->get( QNetworkRequest( url ) );
-	//	this->RequestId = this->HttpFD->get( url.path() );
-	//	this->RequestAborted = false;
-	this->MessageGroupID = messagegroup;
-	this->MessageAppID = messageappid;
-}
+	this->HttpFD = curl_easy_init();
 
-
-void HttpClient::RequestPost(QUrl& url, QByteArray& postdata, int messagegroup, int messageappid )
-{
-	this->HttpFD->post( QNetworkRequest( url ), postdata );
-	//	this->RequestId = this->HttpFD->post( url.path(), postdata.toUtf8() );
-	//	this->RequestAborted = false;
-	this->MessageGroupID = messagegroup;
-	this->MessageAppID = messageappid;
-}
-
-
-
-HttpClient::HttpClient(QObject *parent) : QObject(parent)
-{
-	this->HttpFD = new QNetworkAccessManager( this );
-	connect( this->HttpFD, SIGNAL( finished(QNetworkReply*) ), this, SLOT(ReplyFinish(QNetworkReply*)) );
-	this->RequestId = -1;
-	this->RequestAborted = false;
-	//connect( this->HttpFD, SIGNAL( done( bool ) ), this, SLOT( HttpDone(bool)) );
-	//connect( this->HttpFD, SIGNAL( responseHeaderReceived( const QHttpResponseHeader& )), this, SLOT(ReadResponseHeader( const QHttpResponseHeader&)));
-
-
-
-}
-
-
-//void HttpClient::ReadResponseHeader(const QHttpResponseHeader &responseHeader)
-//{
-//	qDebug() << tr( "HttpClient StatusCode: ") << responseHeader.statusCode();
-
-//	if( responseHeader.statusCode() != 200 )
-//	{
-//		qDebug() << tr( "Request ID") << tr( ": ") << this->RequestId;
-//		qDebug() << tr( "Download Failed: %1.").arg( responseHeader.reasonPhrase() );
-//		this->RequestAborted = true;
-//		this->HttpFD->abort();
-//	}
-//}
-
-//void HttpClient::HttpDone(bool error)
-//{
-//	//	MessageQueueNode* TemperoryNode = new MessageQueueNode();
-//	//	TemperoryNode->MessageRequestID = this->RequestId;
-//	//	TemperoryNode->IsError = error;
-//	//	TemperoryNode->MessageGroupID = this->MessageGroupID;
-//	//	TemperoryNode->MessageAppID = this->MessageAppID;
-
-//	//	//qDebug() << tr( "Request ID") << this->RequestId << tr( ": ") << endl;
-
-//	//	if( error )
-//	//	{
-//	//		//qDebug() << tr( "Error!") << qPrintable( this->HttpFD->errorString()) << endl;
-
-//	//		TemperoryNode->MessageContent = this->HttpFD->errorString();
-//	//	}
-//	//	else
-//	//	{
-//	//		QString TemperoryString( this->HttpFD->readAll() );
-//	//		//qDebug() << tr( "Received: ") << TemperoryString << endl;
-
-//	//		TemperoryNode->MessageContent = TemperoryString;
-//	//	}
-
-//	//	MessageHandling::GetInstance()->MessageQueuePointer->MessageEnqueue( TemperoryNode );
-//	//	TemperoryNode = NULL;
-
-//}
-
-
-void HttpClient::ReplyFinish(QNetworkReply *reply)
-{
-	MessageQueueNode* TemperoryNode = new MessageQueueNode();
-	TemperoryNode->MessageGroupID = this->MessageGroupID;
-	TemperoryNode->MessageAppID = this->MessageAppID;
-
-	//qDebug() << tr( "Request ID") << this->RequestId << tr( ": ") << endl;
-	qDebug() << tr( "reply url : " ) << reply->url().toString();
-
-
-	if( reply->error() != QNetworkReply::NoError )
+	if( this->HttpFD == NULL )
 	{
-		//qDebug() << tr( "Error!") << qPrintable( this->HttpFD->errorString()) << endl;
-		TemperoryNode->IsError = true;
-		TemperoryNode->MessageContent = reply->errorString();
-	}
-	else
-	{
-		QString TemperoryString( reply->readAll() );
-		//qDebug() << tr( "Received: ") << TemperoryString << endl;
-		TemperoryNode->IsError = false;
-		TemperoryNode->MessageContent = TemperoryString;
+		curl_easy_cleanup( this->HttpFD );
+		this->HttpFD = NULL;
+		return CURLE_FAILED_INIT;
 	}
 
-	MessageHandling::GetInstance()->MessageQueuePointer->MessageEnqueue( TemperoryNode );
-	TemperoryNode = NULL;
+	curl_easy_setopt( this->HttpFD, CURLOPT_URL, url.toString().toUtf8().data() );
+	curl_easy_setopt( this->HttpFD, CURLOPT_NOSIGNAL, 1 );
+	curl_easy_setopt( this->HttpFD, CURLOPT_WRITEFUNCTION, HttpClientContentReceived );
+	curl_easy_setopt( this->HttpFD, CURLOPT_WRITEDATA, ( void* )&TemperoryContent );
+	curl_easy_setopt( this->HttpFD, CURLOPT_CONNECTTIMEOUT, 3);
+	curl_easy_setopt( this->HttpFD, CURLOPT_TIMEOUT, 3);
+	requestresult = curl_easy_perform( this->HttpFD );
+	curl_easy_cleanup( this->HttpFD );
+	this->HttpFD = NULL;
 
-	reply->deleteLater();
+	RespondContent = QString::fromStdString( TemperoryContent );
+
+	return requestresult;
+}
+
+
+CURLcode HttpClient::RequestPost( QUrl& url, QString& Postdata, QString& RespondContent )
+{
+	return CURLE_OK;
+}
+
+
+
+HttpClient::HttpClient()
+{
+	this->HttpFD = NULL;
+}
+
+size_t HttpClientContentReceived( void *ptr, size_t size, size_t nmemb, void *stream )
+{
+	std::string* destinationpointer = dynamic_cast< std::string* >( ( std::string* )stream );
+	if( NULL == destinationpointer || NULL == ptr )
+	{
+	return -1;
+	}
+
+	char* sourcepointer = (char*)ptr;
+	destinationpointer->append( sourcepointer, size * nmemb);
+
+	return nmemb;
 }

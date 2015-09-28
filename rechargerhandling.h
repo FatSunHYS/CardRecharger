@@ -1,33 +1,25 @@
 #ifndef RECHARGERHANDLING_H
 #define RECHARGERHANDLING_H
 
-#include <QObject>
-#include <QThread>
-#include <QMutex>
-#include <QMutexLocker>
 #include <QCryptographicHash>
 
-#include "httpclient.h"
+#include <pthread.h>
+#include <curl/curl.h>
 
-class RechargerHandling : public QThread
+class RechargerHandling
 {
-	Q_OBJECT
 public:
+	CURL* RechargerClient;
+
 	static RechargerHandling* GetInstance();
-
-
-protected:
-	void run();
-
-signals:
-
-public slots:
+	bool CreatePThread();
 
 private:
 	static RechargerHandling* PrivateInstance;
-	HttpClient RechargerClient;
 	QCryptographicHash* EncrpytMD5;
-	explicit RechargerHandling( QObject* parent = 0 );
+	pthread_t RechargerHandlingPthreadID;
+
+	RechargerHandling();
 
 
 };

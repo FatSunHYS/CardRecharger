@@ -11,10 +11,12 @@
 #include <pthread.h>
 #include <curl/curl.h>
 
+#include "httpclient.h"
+
 class TimestampHandling
 {
 public:
-	CURL* TimestampClient;
+	HttpClient TimestampClient;
 
 	static TimestampHandling* GetInstance();
 	void CalibrateTimestamp( double newtimestamp );
@@ -34,13 +36,14 @@ private:
 	bool FirstInitialed;
 	pthread_t TimestampHandlingPthreadID;
 
-	explicit TimestampHandling();
+	TimestampHandling();
 
 
 };
 
 
 void* TimestampHandler( void* arg );
+size_t TimestampMessageReceived( void *ptr, size_t size, size_t nmemb, void *stream );
 
 
 #endif // TIMESTAMPHANDLING_H

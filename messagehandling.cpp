@@ -83,7 +83,6 @@ void MessageHandling::ParsingRechargerMessages( MessageQueueNode* message )
 {
 	char timestampbuffer[ 1024 ];
 
-	qDebug() << QObject::tr( "ParsingRechargerMessages:" ) << message->MessageRequestID;
 	qDebug() << QObject::tr( "IsError:") << message->IsError;
 
 	if( message->IsError )

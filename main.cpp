@@ -18,7 +18,6 @@
 
 MessageHandling* DebugMessageHandlingInstance;
 TimestampHandling* DebugTimestampHandlingInstance;
-HttpClient* DebugHttpClient;
 
 bool SystemInitialization();
 
@@ -43,20 +42,13 @@ int main(int argc, char *argv[])
 
 	ErrorDialog e;
 
-//	DebugHttpClient = new HttpClient();
-//	QUrl urlx( "http://120.25.81.161:8080/XYJR/clientapi/getSysTime" );
-//	DebugHttpClient->RequestGet( urlx, 0, 0 );
-
 	if( SystemInitialization() )
 	//if( 0 )
 	{
-		//TimestampHttpClient = new HttpClient();
-
 
 		DebugMessageHandlingInstance = MessageHandling::GetInstance();
 		DebugMessageHandlingInstance->CreatePThread();
-		DebugTimestampHandlingInstance = TimestampHandling::GetInstance();
-		DebugTimestampHandlingInstance->CreatePThread();
+		TimestampHandling::GetInstance()->CreatePThread();
 		//RechargerHandling::GetInstance()->start();
 
 		w.setWindowFlags( Qt::FramelessWindowHint );

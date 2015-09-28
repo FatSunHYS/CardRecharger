@@ -1,4 +1,7 @@
+#include <QObject>
 #include <QDebug>
+#include <QString>
+#include <QUrl>
 
 #include "rechargerhandling.h"
 #include "timestamphandling.h"
@@ -8,9 +11,10 @@
 
 RechargerHandling* RechargerHandling::PrivateInstance = NULL;
 
-RechargerHandling::RechargerHandling(QObject *parent) : QThread( parent )
+RechargerHandling::RechargerHandling()
 {
 	this->EncrpytMD5 = new QCryptographicHash( QCryptographicHash::Md5 );
+	this->RechargerClient = NULL;
 }
 
 
@@ -23,8 +27,8 @@ RechargerHandling* RechargerHandling::GetInstance()
 
 	return RechargerHandling::PrivateInstance;
 }
-
-void RechargerHandling::run()
+#if 0
+void test()
 {
 	QString CurrentTimestampString;
 	QString secret;
@@ -39,7 +43,7 @@ void RechargerHandling::run()
 
 
 	/* log in the server. */
-	qDebug() << tr( "ready to log in the server." );
+	qDebug() << QObject::tr( "ready to log in the server." );
 	CurrentTimestampString = QString::number( TimestampHandling::GetInstance()->GetTimestamp(), '.', 0 );
 	this->EncrpytMD5->reset();
 	this->EncrpytMD5->addData( CardRecharger::SelfInstance->CardRechargerClientPassword.toLower().toUtf8() );
@@ -48,12 +52,12 @@ void RechargerHandling::run()
 	this->EncrpytMD5->addData( secret.toLower().toUtf8() );
 	secret = QString( this->EncrpytMD5->result().toHex() );
 
-	LoginParameters = ( tr( "identify=" ) + CardRecharger::SelfInstance->CardRechargerClientID );
-	LoginParameters += ( tr( "&secret=" ) + secret );
-	LoginParameters += ( tr( "&timestamp=" ) + CurrentTimestampString );
+	LoginParameters = ( QObject::tr( "identify=" ) + CardRecharger::SelfInstance->CardRechargerClientID );
+	LoginParameters += ( QObject::tr( "&secret=" ) + secret );
+	LoginParameters += ( QObject::tr( "&timestamp=" ) + CurrentTimestampString );
 
 	url.clear();
-	url.setUrl( CardRecharger::SelfInstance->CardRechargerServerURL + tr( "/clientapi/login?" ) + LoginParameters );
+	url.setUrl( CardRecharger::SelfInstance->CardRechargerServerURL + QObject::tr( "/clientapi/login?" ) + LoginParameters );
 	qDebug() << "url = " << url.toString();
 
 	//this->RechargerClient.RequestPost( url, LoginParameters, MessageHandling::RechargerMessages, MessageHandling::Login );
@@ -76,3 +80,4 @@ void RechargerHandling::run()
 
 }
 
+#endif
