@@ -1,10 +1,10 @@
 #include <QDebug>
+#include <QObject>
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
-using namespace std;
 
 #include "messagehandling.h"
 #include "timestamphandling.h"
@@ -25,30 +25,38 @@ MessageHandling* MessageHandling::GetInstance()
 
 
 
-MessageHandling::MessageHandling(QObject *parent) : QThread(parent)
+MessageHandling::MessageHandling()
 {
 	this->MessageQueuePointer = new MessageQueue();
 }
 
 
-void MessageHandling::run()
+void* MessageHandler( void* arg )
 {
 	MessageQueueNode* TemperoryMessage = NULL;
+	MessageHandling* Handler = MessageHandling::GetInstance();
+
+	qDebug() << QObject::tr( "MessageHandler is running..." );
+
+	if( arg != NULL )
+	{
+
+	}
 
 	while( true )
 	{
-		if( this->MessageQueuePointer->QueueIsEmpty() )
+		if( Handler->MessageQueuePointer->QueueIsEmpty() )
 		{
 			continue;
 		}
 
-		TemperoryMessage = this->MessageQueuePointer->MessageDequeue();
+		TemperoryMessage = Handler->MessageQueuePointer->MessageDequeue();
 
 		switch( TemperoryMessage->MessageGroupID )
 		{
 			case MessageHandling::RechargerMessages:
 			{
-				this->ParsingRechargerMessages( TemperoryMessage );
+				Handler->ParsingRechargerMessages( TemperoryMessage );
 				break;
 			}
 
@@ -66,6 +74,7 @@ void MessageHandling::run()
 
 	}
 
+	return ( void* )0;
 
 }
 
@@ -74,8 +83,8 @@ void MessageHandling::ParsingRechargerMessages( MessageQueueNode* message )
 {
 	char timestampbuffer[ 1024 ];
 
-	qDebug() << tr( "ParsingRechargerMessages:" ) << message->MessageRequestID;
-	qDebug() << tr( "IsError:") << message->IsError;
+	qDebug() << QObject::tr( "ParsingRechargerMessages:" ) << message->MessageRequestID;
+	qDebug() << QObject::tr( "IsError:") << message->IsError;
 
 	if( message->IsError )
 	{
@@ -105,7 +114,7 @@ void MessageHandling::ParsingRechargerMessages( MessageQueueNode* message )
 
 		default:
 		{
-			qDebug() << tr( "MessageAppID Error!" );
+			qDebug() << QObject::tr( "MessageAppID Error!" );
 			return;
 		}
 	}
@@ -114,7 +123,21 @@ void MessageHandling::ParsingRechargerMessages( MessageQueueNode* message )
 
 }
 
+bool MessageHandling::CreatePThread()
+{
+	int err = pthread_create( &( this->MessageHandlingPthreadID ), NULL, MessageHandler, NULL );
 
+	if( err != 0 )
+	{
+		qDebug() << QObject::tr( "Create pthread MessageHandling error!" );
+		return false;
+	}
+	else
+	{
+		qDebug() << QObject::tr( "Create pthread MessageHandling Successfully." );
+		return true;
+	}
+}
 
 
 

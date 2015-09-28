@@ -6,6 +6,7 @@
 #endif
 
 #include <stdlib.h>
+#include <curl/curl.h>
 
 #include "cardrecharger.h"
 #include "errordialog.h"
@@ -35,6 +36,8 @@ int main(int argc, char *argv[])
 	QTextCodec::setCodecForLocale(QTextCodec::codecForName("UTF-8"));
 	QTextCodec::setCodecForCStrings(QTextCodec::codecForName("UTF-8"));
 
+	curl_global_init( CURL_GLOBAL_ALL );
+
 	CardRecharger w;
 	CardRecharger::SelfInstance = &w;
 
@@ -51,10 +54,10 @@ int main(int argc, char *argv[])
 
 
 		DebugMessageHandlingInstance = MessageHandling::GetInstance();
+		DebugMessageHandlingInstance->CreatePThread();
 		DebugTimestampHandlingInstance = TimestampHandling::GetInstance();
-		MessageHandling::GetInstance()->start();
-		TimestampHandling::GetInstance()->start();
-		RechargerHandling::GetInstance()->start();
+		DebugTimestampHandlingInstance->CreatePThread();
+		//RechargerHandling::GetInstance()->start();
 
 		w.setWindowFlags( Qt::FramelessWindowHint );
 		w.show();

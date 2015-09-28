@@ -1,15 +1,15 @@
 #ifndef MESSAGEHANDLING_H
 #define MESSAGEHANDLING_H
 
-#include <QObject>
-#include <QThread>
+#include <pthread.h>
+
 #include "messagequeue.h"
 #include "messagequeuenode.h"
 
 
-class MessageHandling : public QThread
+class MessageHandling
 {
-	Q_OBJECT
+
 public:
 	enum
 	{
@@ -27,20 +27,18 @@ public:
 
 	static MessageHandling* GetInstance();
 	void ParsingRechargerMessages( MessageQueueNode* message );
+	bool CreatePThread();
 
-protected:
-	void run();
-
-signals:
-
-public slots:
 
 
 private:
 	static MessageHandling* PrivateInstance;
+	pthread_t MessageHandlingPthreadID;
 
-	explicit MessageHandling(QObject *parent = 0);
+	explicit MessageHandling();
 
 };
+
+void* MessageHandler( void* arg );
 
 #endif // RECHARGERMESSAGEHANDLING_H

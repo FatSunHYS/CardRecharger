@@ -1,21 +1,25 @@
+#include <QObject>
 #include <QDebug>
+#include <QUrl>
 
 #include <time.h>
 #include <sys/time.h>
+#include <stdlib.h>
+#include <unistd.h>
 
 #include "timestamphandling.h"
 #include "cardrecharger.h"
 #include "messagehandling.h"
 
-//HttpClient* TimestampHttpClient;
 
 TimestampHandling* TimestampHandling::PrivateInstace = NULL;
 
-TimestampHandling::TimestampHandling(QObject *parent) : QThread(parent)
+TimestampHandling::TimestampHandling()
 {
-	this->TimestampIsInitialized = false;
+	this->TimestampIsRefreshed = false;
 	this->unixtimestamp = 0;
 	this->FirstInitialed = false;
+	this->TimestampClient = NULL;
 }
 
 
@@ -31,36 +35,55 @@ TimestampHandling* TimestampHandling::GetInstance()
 }
 
 
-void TimestampHandling::run()
+void* TimestampHandler( void* arg )
 {
 	int TimeoutCounter;
 	bool ButtonFirstEnable = false;
 	int CalibrateErrorCounter;
-	QNetworkAccessManager TimestampHttpFD;
-	QNetworkRequest TimestampHttpRequest;
+	TimestampHandling* Handler = TimestampHandling::GetInstance();
+	CURLcode requestresult;
 
-	this->HttpFD = &TimestampHttpFD;
-	this->HttpRequest = &TimestampHttpRequest;
+	if( arg != NULL )
+	{
 
-	connect( &TimestampHttpFD, SIGNAL(finished(QNetworkReply*)), this, SLOT(ReplyFinish(QNetworkReply*)) );
+	}
 
-	QUrl url( CardRecharger::SelfInstance->CardRechargerServerURL + tr( "/clientapi/getSysTime" ) );
+	qDebug() << QObject::tr( "TimestampHandler is running..." );
+
+	QUrl url( CardRecharger::SelfInstance->CardRechargerServerURL + QObject::tr( "/clientapi/getSysTime" ) );
 	qDebug() << url.toString();
 
 	CalibrateErrorCounter = 0;
 	while( true )
 	{
-		this->TimestampIsInitialized = false;
+		Handler->SetTimestampRefreshState( false );
 		//TimestampClient->RequestGet( url, MessageHandling::RechargerMessages, MessageHandling::GetSysTime );
 		//this->HttpRequest->setUrl( url );
 		//this->HttpFD->get( *( this->HttpRequest ) );
 		//TimestampHttpClient->RequestGet( url, MessageHandling::RechargerMessages, MessageHandling::GetSysTime );
-		HttpRequest->setUrl( url );
-		HttpFD->get( TimestampHttpRequest );
 
+		Handler->TimestampClient = curl_easy_init();
+
+		if( Handler->TimestampClient == NULL )
+		{
+			qDebug() << QObject::tr( "TimestampClient initilized fail. Try again after 3 seconds." );
+			curl_easy_cleanup( Handler->TimestampClient );
+			sleep( 3 );
+			continue;
+		}
+
+		curl_easy_setopt( Handler->TimestampClient, CURLOPT_URL, url.toString().toUtf8().data() );
+		curl_easy_setopt( Handler->TimestampClient, CURLOPT_NOSIGNAL, 1 );
+		requestresult = curl_easy_perform( Handler->TimestampClient );
+		qDebug() << QObject::tr( "request result = " ) << requestresult;
+		curl_easy_cleanup( Handler->TimestampClient );
+
+
+
+#if 0
 		TimeoutCounter = 0;
 
-		while( this->TimestampIsInitialized == false )
+		while( Handler->GetTimestampRefreshState() == false )
 		{
 			sleep( 1 );
 			++TimeoutCounter;
@@ -79,41 +102,41 @@ void TimestampHandling::run()
 #ifdef CHINESE_OUTPUT
 				CardRecharger::SelfInstance->SetStatusLabel( tr( "网络断开，请检查网络！"));
 #else
-				CardRecharger::SelfInstance->SetStatusLabel( tr( "Please reconnect the network!"));
+				CardRecharger::SelfInstance->SetStatusLabel( QObject::tr( "Please reconnect the network!"));
 #endif
 			}
 			continue;
 		}
+#endif
 
-
-		qDebug() << tr( "calibrate successfully.");
+		qDebug() << QObject::tr( "calibrate successfully.");
 		CalibrateErrorCounter = 0;
-		this->FirstInitialed = true;
+		Handler->FirstInitialDone();
 
 		if( ButtonFirstEnable == false )
 		{
 			ButtonFirstEnable = true;
 			CardRecharger::SelfInstance->AllButtonEnable();
 #ifdef CHINESE_OUTPUT
-			CardRecharger::SelfInstance->SetStatusLabel( tr( "请点击充值金额"));
+			CardRecharger::SelfInstance->SetStatusLabel( QObject::tr( "请点击充值金额"));
 #else
-			CardRecharger::SelfInstance->SetStatusLabel( tr( "Click the recharger button to recharge"));
+			CardRecharger::SelfInstance->SetStatusLabel( QObject::tr( "Click the recharger button to recharge"));
 #endif
 
-			qDebug() << tr( "All Button is Enable." );
+			qDebug() << QObject::tr( "All Button is Enable." );
 
 		}
 
 		for( int i = 0; i < 86400; ++i )
 		{
 			sleep( 1 );
-			this->unixtimestamp += 1000;
-			qDebug() << "current time: " << QString::number( this->GetTimestamp(), '.', 0 );
+			Handler->RefreshTimestamp();
+			qDebug() << QObject::tr( "current time: " ) << QString::number( Handler->GetTimestamp(), '.', 0 );
 		}
 
 	}
 
-
+	return ( void* )0;
 }
 
 
@@ -121,9 +144,9 @@ void TimestampHandling::run()
 void TimestampHandling::CalibrateTimestamp(double newtimestamp)
 {
 	this->unixtimestamp = newtimestamp;
-	qDebug() << tr( "unix timestamp: " ) << QString::number( newtimestamp, '.', 0 );
+	qDebug() << QObject::tr( "unix timestamp: " ) << QString::number( newtimestamp, '.', 0 );
 
-	this->TimestampIsInitialized = true;
+	this->TimestampIsRefreshed = true;
 }
 
 double TimestampHandling::GetTimestamp()
@@ -139,43 +162,45 @@ bool TimestampHandling::IsFirstInitialed()
 
 
 
-void TimestampHandling::ReplyFinish(QNetworkReply *reply)
+
+bool TimestampHandling::CreatePThread()
 {
-	MessageQueueNode* TemperoryNode = new MessageQueueNode();
-	TemperoryNode->MessageGroupID = MessageHandling::RechargerMessages;
-	TemperoryNode->MessageAppID = MessageHandling::GetSysTime;
+	int err = pthread_create( &( this->TimestampHandlingPthreadID ), NULL, TimestampHandler, NULL );
 
-	//qDebug() << tr( "Request ID") << this->RequestId << tr( ": ") << endl;
-	qDebug() << tr( "reply url : " ) << reply->url().toString();
-
-
-	if( reply->error() != QNetworkReply::NoError )
+	if( err != 0 )
 	{
-		//qDebug() << tr( "Error!") << qPrintable( this->HttpFD->errorString()) << endl;
-		TemperoryNode->IsError = true;
-		TemperoryNode->MessageContent = reply->errorString();
+		qDebug() << QObject::tr( "Create pthread TimestampHandler error!" );
+		return false;
 	}
 	else
 	{
-		QString TemperoryString( reply->readAll() );
-		//qDebug() << tr( "Received: ") << TemperoryString << endl;
-		TemperoryNode->IsError = false;
-		TemperoryNode->MessageContent = TemperoryString;
+		qDebug() << QObject::tr( "Create pthread TimestampHandler Successfully." );
+		return true;
 	}
-
-	MessageHandling::GetInstance()->MessageQueuePointer->MessageEnqueue( TemperoryNode );
-	TemperoryNode = NULL;
-
-	reply->deleteLater();
 }
 
 
+void TimestampHandling::SetTimestampRefreshState(bool newstate)
+{
+	this->TimestampIsRefreshed = newstate;
+}
 
 
+bool TimestampHandling::GetTimestampRefreshState()
+{
+	return this->TimestampIsRefreshed;
+}
 
 
+void TimestampHandling::FirstInitialDone()
+{
+	this->FirstInitialed = true;
+}
 
-
+void TimestampHandling::RefreshTimestamp()
+{
+	this->unixtimestamp += 1000;
+}
 
 
 

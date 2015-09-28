@@ -8,44 +8,39 @@
 #ifndef TIMESTAMPHANDLING_H
 #define TIMESTAMPHANDLING_H
 
-#include <QObject>
-#include <QThread>
-#include <QtNetwork>
+#include <pthread.h>
+#include <curl/curl.h>
 
-class TimestampHandling : public QThread
+class TimestampHandling
 {
-	Q_OBJECT
 public:
+	CURL* TimestampClient;
+
 	static TimestampHandling* GetInstance();
 	void CalibrateTimestamp( double newtimestamp );
 	double GetTimestamp();
 	bool IsFirstInitialed();
+	bool CreatePThread();
+	bool GetTimestampRefreshState();
+	void SetTimestampRefreshState( bool newstate );
+	void FirstInitialDone();
+	void RefreshTimestamp();
 
-protected:
-	void run();
-
-signals:
-
-public slots:
-
-private slots:
-	void ReplyFinish( QNetworkReply* reply );
 
 private:
 	static TimestampHandling* PrivateInstace;
-	QNetworkAccessManager* HttpFD;
-	QNetworkRequest* HttpRequest;
-	bool TimestampIsInitialized;
+	bool TimestampIsRefreshed;
 	double unixtimestamp;
 	bool FirstInitialed;
+	pthread_t TimestampHandlingPthreadID;
 
-	explicit TimestampHandling(QObject *parent = 0);
+	explicit TimestampHandling();
 
 
 };
 
 
-//extern HttpClient* TimestampHttpClient;
+void* TimestampHandler( void* arg );
 
 
 #endif // TIMESTAMPHANDLING_H
