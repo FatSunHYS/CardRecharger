@@ -22,9 +22,9 @@ public:
 	enum
 	{
 		GetSysTime = 0,
-		Login
+		Login,
+		KeepAlived
 	}MessageAppID;
-
 	MessageQueue* MessageQueuePointer;
 
 	static MessageHandling* GetInstance();

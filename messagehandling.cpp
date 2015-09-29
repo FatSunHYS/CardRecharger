@@ -84,11 +84,12 @@ void* MessageHandler( void* arg )
 
 void MessageHandling::ParsingRechargerMessages( MessageQueueNode* message )
 {
-	qDebug() << QObject::tr( "IsError:") << message->IsError;
+	//qDebug() << QObject::tr( "IsError:") << message->IsError;
 
 	if( message->IsError )
 	{
-		qDebug() << message->MessageContent;
+		//qDebug() << message->MessageContent;
+		qDebug() << QObject::tr( "Message is error!" );
 		return;
 	}
 	else
@@ -108,6 +109,12 @@ void MessageHandling::ParsingRechargerMessages( MessageQueueNode* message )
 		case MessageHandling::Login:
 		{
 			RechargerHandling::GetInstance()->ParseLoginMessage( message->MessageContent );
+			break;
+		}
+
+		case MessageHandling::KeepAlived:
+		{
+			RechargerHandling::GetInstance()->ParseKeepAlivedMessage( message->MessageContent );
 			break;
 		}
 

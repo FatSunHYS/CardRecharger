@@ -19,6 +19,7 @@ class TimestampHandling
 {
 public:
 	HttpClient TimestampClient;
+	bool ReCalibrateIsNeeded;
 
 	static TimestampHandling* GetInstance();
 	void CalibrateTimestamp( double newtimestamp );

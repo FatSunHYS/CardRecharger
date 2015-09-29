@@ -26,6 +26,7 @@ TimestampHandling::TimestampHandling()
 	this->TimestampIsRefreshed = false;
 	this->unixtimestamp = 0;
 	this->FirstInitialed = false;
+	this->ReCalibrateIsNeeded = false;
 }
 
 
@@ -44,8 +45,8 @@ TimestampHandling* TimestampHandling::GetInstance()
 void* TimestampHandler( void* arg )
 {
 	int TimeoutCounter;
-	bool ButtonFirstEnable = false;
 	int CalibrateErrorCounter;
+	bool ButtonFirstEnable = false;
 	TimestampHandling* Handler = TimestampHandling::GetInstance();
 	CURLcode RequestResult;
 	QString RespondContent;
@@ -59,7 +60,7 @@ void* TimestampHandler( void* arg )
 	qDebug() << QObject::tr( "TimestampHandler is running..." );
 
 	QUrl url( CardRecharger::SelfInstance->CardRechargerServerURL + QObject::tr( "/clientapi/getSysTime" ) );
-	qDebug() << url.toString();
+	qDebug() << QObject::tr( "RequestGet:" ) << url.toString();
 
 	CalibrateErrorCounter = 0;
 	while( true )
@@ -77,13 +78,11 @@ void* TimestampHandler( void* arg )
 
 		if( RequestResult == CURLE_OK )
 		{
-
 			TemperoryNode->IsError = false;
 			TemperoryNode->MessageContent = RespondContent;
 		}
 		else
 		{
-
 			TemperoryNode->IsError = true;
 			TemperoryNode->MessageContent = QObject::tr( "NULL" );
 		}
@@ -136,10 +135,15 @@ void* TimestampHandler( void* arg )
 
 		}
 
+		Handler->ReCalibrateIsNeeded = false;
 		for( int i = 0; i < 86400; ++i )
 		{
 			sleep( 1 );
 			Handler->RefreshTimestamp();
+			if( Handler->ReCalibrateIsNeeded == true )
+			{
+				break;
+			}
 			qDebug() << QObject::tr( "current time: " ) << QString::number( Handler->GetTimestamp(), '.', 0 );
 		}
 
@@ -153,7 +157,7 @@ void* TimestampHandler( void* arg )
 void TimestampHandling::CalibrateTimestamp(double newtimestamp)
 {
 	this->unixtimestamp = newtimestamp;
-	qDebug() << QObject::tr( "unix timestamp: " ) << QString::number( newtimestamp, '.', 0 );
+	//qDebug() << QObject::tr( "unix timestamp: " ) << QString::number( newtimestamp, '.', 0 );
 
 	this->TimestampIsRefreshed = true;
 }
@@ -217,10 +221,19 @@ void TimestampHandling::ParseGetSysTimeMessage(QString &Message)
 	char timestampbuffer[ 1024 ];
 	strcpy( timestampbuffer, Message.toUtf8().data() );
 	cJSON* root = cJSON_Parse( timestampbuffer );
-	double tempint = cJSON_GetObjectItem( root, "timestamp" )->valuedouble;
-	cJSON_Delete( root );
 
-	this->CalibrateTimestamp( tempint );
+	int TemperoryCode = cJSON_GetObjectItem( root, "code" )->valueint;
+	if( TemperoryCode == 0 )
+	{
+		double TemperoryTimestamp = cJSON_GetObjectItem( root, "timestamp" )->valuedouble;
+		this->CalibrateTimestamp( TemperoryTimestamp );
+	}
+	else
+	{
+
+	}
+
+	cJSON_Delete( root );
 }
 
 
