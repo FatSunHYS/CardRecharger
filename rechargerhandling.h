@@ -4,24 +4,32 @@
 #include <QCryptographicHash>
 
 #include <pthread.h>
-#include <curl/curl.h>
+
+#include "httpclient.h"
 
 class RechargerHandling
 {
 public:
-	CURL* RechargerClient;
+	HttpClient RechargerClient;
+	QCryptographicHash* EncrpytMD5;
+	pthread_mutex_t MD5Locker;
 
 	static RechargerHandling* GetInstance();
 	bool CreatePThread();
+	void ParseLoginMessage( QString& Message );
 
 private:
 	static RechargerHandling* PrivateInstance;
-	QCryptographicHash* EncrpytMD5;
 	pthread_t RechargerHandlingPthreadID;
+
 
 	RechargerHandling();
 
 
 };
+
+
+
+void* RechargerHandler( void* arg );
 
 #endif // RECHARGERHANDLING_H

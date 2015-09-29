@@ -8,7 +8,8 @@
 
 #include "messagehandling.h"
 #include "timestamphandling.h"
-#include "cJSON.h"
+#include "rechargerhandling.h"
+
 
 MessageHandling* MessageHandling::PrivateInstance = NULL;
 
@@ -71,6 +72,8 @@ void* MessageHandler( void* arg )
 			}
 		}
 
+		delete TemperoryMessage;
+		TemperoryMessage = NULL;
 
 	}
 
@@ -81,18 +84,16 @@ void* MessageHandler( void* arg )
 
 void MessageHandling::ParsingRechargerMessages( MessageQueueNode* message )
 {
-	char timestampbuffer[ 1024 ];
-
 	qDebug() << QObject::tr( "IsError:") << message->IsError;
 
 	if( message->IsError )
 	{
-		qDebug() << message->MessageContent << endl;
+		qDebug() << message->MessageContent;
 		return;
 	}
 	else
 	{
-		qDebug() << message->MessageContent << endl;
+		qDebug() << message->MessageContent;
 	}
 
 
@@ -100,14 +101,13 @@ void MessageHandling::ParsingRechargerMessages( MessageQueueNode* message )
 	{
 		case MessageHandling::GetSysTime:
 		{
-			strcpy( timestampbuffer, message->MessageContent.toUtf8().data() );
-			cJSON* root = cJSON_Parse( timestampbuffer );
-			double tempint = cJSON_GetObjectItem( root, "timestamp" )->valuedouble;
-			cJSON_Delete( root );
-			//qDebug() << tr( "tempint = " ) << tempint;
+			TimestampHandling::GetInstance()->ParseGetSysTimeMessage( message->MessageContent );
+			break;
+		}
 
-			TimestampHandling::GetInstance()->CalibrateTimestamp( tempint );
-
+		case MessageHandling::Login:
+		{
+			RechargerHandling::GetInstance()->ParseLoginMessage( message->MessageContent );
 			break;
 		}
 

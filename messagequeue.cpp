@@ -1,41 +1,61 @@
 #include "messagequeue.h"
 
-MessageQueue::MessageQueue(QObject *parent ) : QObject( parent )
+MessageQueue::MessageQueue()
 {
-
+	pthread_mutex_init( &this->MessageQueueLock, NULL );
 }
 
 MessageQueueNode* MessageQueue::MessageDequeue()
 {
-	QMutexLocker TemperoryLocker( &this->MessageMutex );
+	MessageQueueNode* TemperoryNode;
+
+	pthread_mutex_lock( &this->MessageQueueLock );
 
 	if( this->Messages.isEmpty() )
 	{
-		return NULL;
+		TemperoryNode = NULL;
 	}
 	else
 	{
-		return this->Messages.dequeue();
+		TemperoryNode = this->Messages.dequeue();
 	}
+
+	pthread_mutex_unlock( &this->MessageQueueLock );
+
+	return TemperoryNode;
 }
 
 void MessageQueue::MessageEnqueue( MessageQueueNode* node)
 {
-	QMutexLocker TemperoryLocker( &this->MessageMutex );
+	pthread_mutex_lock( &this->MessageQueueLock );
 
 	this->Messages.enqueue( node );
+
+	pthread_mutex_unlock( &this->MessageQueueLock );
 }
 
 MessageQueueNode* MessageQueue::MessageHead()
 {
-	QMutexLocker TemperoryLocker( &this->MessageMutex );
+	MessageQueueNode* TemperoryNode;
 
-	return this->Messages.head();
+	pthread_mutex_lock( &this->MessageQueueLock );
+
+	TemperoryNode = this->Messages.head();
+
+	pthread_mutex_unlock( &this->MessageQueueLock );
+
+	return TemperoryNode;
 }
 
 bool MessageQueue::QueueIsEmpty()
 {
-	QMutexLocker TemperoryLocker( &this->MessageMutex );
+	bool TemperoryBool;
 
-	return this->Messages.isEmpty();
+	pthread_mutex_lock( &this->MessageQueueLock );
+
+	TemperoryBool = this->Messages.isEmpty();
+
+	pthread_mutex_unlock( &this->MessageQueueLock );
+
+	return TemperoryBool;
 }

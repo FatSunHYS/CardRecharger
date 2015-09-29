@@ -8,6 +8,8 @@
 #ifndef TIMESTAMPHANDLING_H
 #define TIMESTAMPHANDLING_H
 
+#include <QString>
+
 #include <pthread.h>
 #include <curl/curl.h>
 
@@ -27,6 +29,7 @@ public:
 	void SetTimestampRefreshState( bool newstate );
 	void FirstInitialDone();
 	void RefreshTimestamp();
+	void ParseGetSysTimeMessage( QString& Message );
 
 
 private:
@@ -43,7 +46,6 @@ private:
 
 
 void* TimestampHandler( void* arg );
-size_t TimestampMessageReceived( void *ptr, size_t size, size_t nmemb, void *stream );
 
 
 #endif // TIMESTAMPHANDLING_H

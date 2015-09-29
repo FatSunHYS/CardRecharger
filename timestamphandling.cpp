@@ -16,6 +16,7 @@ using namespace std;
 #include "messagehandling.h"
 #include "messagequeue.h"
 #include "messagequeuenode.h"
+#include "cJSON.h"
 
 
 TimestampHandling* TimestampHandling::PrivateInstace = NULL;
@@ -211,7 +212,16 @@ void TimestampHandling::RefreshTimestamp()
 }
 
 
+void TimestampHandling::ParseGetSysTimeMessage(QString &Message)
+{
+	char timestampbuffer[ 1024 ];
+	strcpy( timestampbuffer, Message.toUtf8().data() );
+	cJSON* root = cJSON_Parse( timestampbuffer );
+	double tempint = cJSON_GetObjectItem( root, "timestamp" )->valuedouble;
+	cJSON_Delete( root );
 
+	this->CalibrateTimestamp( tempint );
+}
 
 
 

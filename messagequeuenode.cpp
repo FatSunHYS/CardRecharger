@@ -1,13 +1,11 @@
+#include <QObject>
+
 #include "messagequeuenode.h"
 
-
-
-
-MessageQueueNode::MessageQueueNode(QObject *parent) : QObject(parent)
+MessageQueueNode::MessageQueueNode()
 {
-	this->MessageRequestID = -1;
 	this->IsError = false;
-	this->MessageContent = tr( "NULL" );
+	this->MessageContent = QObject::tr( "NULL" );
 	this->MessageGroupID = -1;
 	this->MessageAppID = -1;
 }
@@ -15,7 +13,6 @@ MessageQueueNode::MessageQueueNode(QObject *parent) : QObject(parent)
 
 MessageQueueNode& MessageQueueNode::operator =( MessageQueueNode node )
 {
-	this->MessageRequestID = node.MessageRequestID;
 	this->IsError = node.IsError;
 	this->MessageContent = node.MessageContent;
 	this->MessageGroupID = node.MessageGroupID;
@@ -24,9 +21,8 @@ MessageQueueNode& MessageQueueNode::operator =( MessageQueueNode node )
 	return *this;
 }
 
-MessageQueueNode::MessageQueueNode(const MessageQueueNode &node ) : QObject( 0 )
+MessageQueueNode::MessageQueueNode(const MessageQueueNode &node )
 {
-	this->MessageRequestID = node.MessageRequestID;
 	this->IsError = node.IsError;
 	this->MessageContent = node.MessageContent;
 	this->MessageGroupID = node.MessageGroupID;

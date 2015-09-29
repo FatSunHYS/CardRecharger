@@ -1,6 +1,8 @@
 #ifndef MESSAGEHANDLING_H
 #define MESSAGEHANDLING_H
 
+#include <QCryptographicHash>
+
 #include <pthread.h>
 
 #include "messagequeue.h"

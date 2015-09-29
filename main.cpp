@@ -17,7 +17,7 @@
 #include "inifile.h"
 
 MessageHandling* DebugMessageHandlingInstance;
-TimestampHandling* DebugTimestampHandlingInstance;
+RechargerHandling* DebugRechargerHandlingInstance;
 
 bool SystemInitialization();
 
@@ -49,7 +49,8 @@ int main(int argc, char *argv[])
 		DebugMessageHandlingInstance = MessageHandling::GetInstance();
 		DebugMessageHandlingInstance->CreatePThread();
 		TimestampHandling::GetInstance()->CreatePThread();
-		//RechargerHandling::GetInstance()->start();
+		DebugRechargerHandlingInstance = RechargerHandling::GetInstance();
+		RechargerHandling::GetInstance()->CreatePThread();
 
 		w.setWindowFlags( Qt::FramelessWindowHint );
 		w.show();

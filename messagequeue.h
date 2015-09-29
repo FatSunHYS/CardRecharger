@@ -1,32 +1,25 @@
 #ifndef MESSAGEQUEUE_H
 #define MESSAGEQUEUE_H
 
-#include <QObject>
 #include <QQueue>
-#include <QMutex>
-#include <QMutexLocker>
+
+#include <pthread.h>
 
 #include "messagequeuenode.h"
 
 
-class MessageQueue : public QObject
+class MessageQueue
 {
-	Q_OBJECT
 public:
-	explicit MessageQueue(QObject *parent = 0);
+	explicit MessageQueue();
 	MessageQueueNode* MessageDequeue();
 	void MessageEnqueue( MessageQueueNode* node );
 	MessageQueueNode* MessageHead();
 	bool QueueIsEmpty();
 
-signals:
-
-public slots:
-
-
 private:
-	QQueue<MessageQueueNode*> Messages;
-	QMutex MessageMutex;
+	QQueue< MessageQueueNode* > Messages;
+	pthread_mutex_t MessageQueueLock;
 
 
 };

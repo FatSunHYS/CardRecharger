@@ -44,5 +44,7 @@ FORMS    += cardrecharger.ui \
 LIBS += -lpthread
 LIBS += -lcurl
 
+DEFINES += CURL_STATICLIB
+
 #DEFINES += EMBEDDED_BOARD
 #DEFINES += CHINESE_OUTPUT
