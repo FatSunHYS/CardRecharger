@@ -3,6 +3,7 @@
 #include <QString>
 #include <QUrl>
 #include <QRegExp>
+#include <QMessageBox>
 
 #include <unistd.h>
 
@@ -11,6 +12,7 @@
 #include "messagehandling.h"
 #include "cardrecharger.h"
 #include "cJSON.h"
+#include "iccarddriver.h"
 
 
 RechargerHandling* RechargerHandling::PrivateInstance = NULL;
@@ -19,6 +21,8 @@ RechargerHandling::RechargerHandling()
 {
 	this->EncrpytMD5 = new QCryptographicHash( QCryptographicHash::Md5 );
 	pthread_mutex_init( &this->MD5Locker, NULL );
+	pthread_mutex_init( &this->RechargeLocker, NULL );
+	pthread_cond_init( &this->ChargeToCard, NULL );
 }
 
 
@@ -35,18 +39,31 @@ RechargerHandling* RechargerHandling::GetInstance()
 
 bool RechargerHandling::CreatePThread()
 {
-	int err = pthread_create( &( this->RechargerHandlingPthreadID ), NULL, RechargerLoginHandler, NULL );
+	int err = pthread_create( &( this->RechargerHandling1PthreadID ), NULL, RechargerLoginHandler, NULL );
 
 	if( err != 0 )
 	{
-		qDebug() << QObject::tr( "Create pthread RechargerHandler error!" );
+		qDebug() << QObject::tr( "Create pthread RechargerLoginHandler error!" );
 		return false;
 	}
 	else
 	{
-		qDebug() << QObject::tr( "Create pthread RechargerHandler Successfully." );
-		return true;
+		qDebug() << QObject::tr( "Create pthread RechargerLoginHandler Successfully." );
 	}
+
+	err = pthread_create( &( this->RechargerHandling2PthreadID ), NULL, RechargerChargeHandler, NULL );
+
+	if( err != 0 )
+	{
+		qDebug() << QObject::tr( "Create pthread RechargerChargeHandler error!" );
+		return false;
+	}
+	else
+	{
+		qDebug() << QObject::tr( "Create pthread RechargerChargeHandler Successfully." );
+	}
+
+	return true;
 }
 
 void* RechargerLoginHandler( void* arg )
@@ -61,7 +78,6 @@ void* RechargerLoginHandler( void* arg )
 	MessageQueueNode* TemperoryNode;
 	int TimeoutCounter;
 	int RechargerErrorCounter;
-	bool ButtonFirstEnable = false;
 
 	if( arg != NULL )
 	{
@@ -160,19 +176,14 @@ void* RechargerLoginHandler( void* arg )
 		/* Login successfully. */
 		qDebug() << QObject::tr( "Login successfully." );
 
-		if( ButtonFirstEnable == false )
-		{
-			ButtonFirstEnable = true;
-			CardRecharger::SelfInstance->AllButtonEnable();
+		CardRecharger::SelfInstance->AllButtonEnable();
 #ifdef CHINESE_OUTPUT
-			CardRecharger::SelfInstance->SetStatusLabel( QObject::tr( "请点击充值金额"));
+		CardRecharger::SelfInstance->SetStatusLabel( QObject::tr( "请点击充值金额"));
 #else
-			CardRecharger::SelfInstance->SetStatusLabel( QObject::tr( "Click the recharger button to recharge"));
+		CardRecharger::SelfInstance->SetStatusLabel( QObject::tr( "Click the recharger button to recharge"));
 #endif
 
-			qDebug() << QObject::tr( "All Button is Enable." );
-
-		}
+		qDebug() << QObject::tr( "All Button is Enable." );
 
 		/* Send Heart Package every 15min. */
 		while( true )
@@ -414,7 +425,59 @@ void RechargerHandling::ParseKeepAlivedMessage(QString &Message)
 
 
 
+void* RechargerChargeHandler(void *arg)
+{
+	RechargerHandling* Handler = RechargerHandling::GetInstance();
 
+	if( arg != NULL )
+	{
+
+	}
+
+	pthread_mutex_lock( &Handler->RechargeLocker );
+
+	while( true )
+	{
+		pthread_cond_wait( &Handler->ChargeToCard, &Handler->RechargeLocker );
+
+		if( Handler->DeviceIsLogin == false )
+		{
+			qDebug() << QObject::tr( "Device is not login!" );
+
+#ifdef CHINESE_OUTPUT
+			QMessageBox::information( 0, QObject::tr( "错误！" ), QObject::tr( "网络断开，请通知维护人员！" ) );
+			CardRecharger::SelfInstance->SetStatusLabel( QObject::tr( "网络断开，请通知维护人员！" ) );
+#else
+			QMessageBox::information( 0, QObject::tr( "Error!" ), QObject::tr( "Network is unavilable!" ) );
+			CardRecharger::SelfInstance->SetStatusLabel( QObject::tr( "Network is unavilable!" ) );
+#endif
+			CardRecharger::SelfInstance->AllButtonEnable();
+			continue;
+		}
+
+		/* Read card. */
+
+
+		/* Precreate. */
+
+
+		/* Query. */
+
+
+		/* PreRechargeCheck. */
+
+
+		/* Write card. */
+
+
+		/* RechargeFinish. */
+
+
+		CardRecharger::SelfInstance->AllButtonEnable();
+	}
+
+	return ( void* )0;
+}
 
 
 

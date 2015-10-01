@@ -3,8 +3,10 @@
 
 #include <QMessageBox>
 
-#include "httpclient.h"
-#include "messagequeuenode.h"
+#include <pthread.h>
+
+#include "rechargerhandling.h"
+
 
 CardRecharger* CardRecharger::SelfInstance = NULL;
 
@@ -19,6 +21,10 @@ CardRecharger::CardRecharger(QWidget *parent) :
 #else
 	ui->StatusLabel->setText( tr( "Calibrating Clock" ) );
 #endif
+
+	ui->PayWay_Ali->setChecked( true );
+	ui->PayWay_WeiXin->setChecked( false );
+
 }
 
 CardRecharger::~CardRecharger()
@@ -28,102 +34,429 @@ CardRecharger::~CardRecharger()
 
 void CardRecharger::on_Recharge5Button_clicked()
 {
+	QString InfoText;
+	this->AllButtonDisable();
 
-	emit this->AllButtonDisable();
-    QMessageBox::information( this, "a", "5" );
-	emit this->AllButtonEnable();
+	if( ui->PayWay_Ali->isChecked() == true )
+	{
+#ifdef CHINESE_OUTPUT
+		InfoText = QObject::tr( "您将使用支付宝" );
+#else
+		InfoText = QObject::tr( "Use Ali-Pay," );
+#endif
+	}
+	else
+	{
+#ifdef CHINESE_OUTPUT
+		InfoText = QObject::tr( "您将使用微信支付" );
+#else
+		InfoText = QObject::tr( "Use WeiXin-Pay," );
+#endif
+	}
+
+#ifdef CHINESE_OUTPUT
+	InfoText += QObject::tr( "充值5元,是否确认？" );
+#else
+	InfoText += QObject::tr( "5 RMB." );
+#endif
+
+#ifdef CHINESE_OUTPUT
+	if( QMessageBox::information( this, QObject::tr( "支付提醒" ), InfoText, QMessageBox::Ok, QMessageBox::Cancel ) == QMessageBox::Ok )
+#else
+	if( QMessageBox::information( this, QObject::tr( "Pay Infomation." ), InfoText, QMessageBox::Ok, QMessageBox::Cancel ) == QMessageBox::Ok )
+#endif
+
+	{
+		pthread_cond_signal( &( RechargerHandling::GetInstance()->ChargeToCard ) );
+	}
+	else
+	{
+		this->AllButtonEnable();
+	}
 }
 
 void CardRecharger::on_Recharge10Button_clicked()
 {
-	emit this->AllButtonDisable();
-    QMessageBox::information( this, "a", "10" );
-	emit this->AllButtonEnable();
+	QString InfoText;
+	this->AllButtonDisable();
+
+	if( ui->PayWay_Ali->isChecked() == true )
+	{
+#ifdef CHINESE_OUTPUT
+		InfoText = QObject::tr( "您将使用支付宝" );
+#else
+		InfoText = QObject::tr( "Use Ali-Pay," );
+#endif
+	}
+	else
+	{
+#ifdef CHINESE_OUTPUT
+		InfoText = QObject::tr( "您将使用微信支付" );
+#else
+		InfoText = QObject::tr( "Use WeiXin-Pay," );
+#endif
+	}
+
+#ifdef CHINESE_OUTPUT
+	InfoText += QObject::tr( "充值10元,是否确认？" );
+#else
+	InfoText += QObject::tr( "10 RMB." );
+#endif
+
+#ifdef CHINESE_OUTPUT
+	if( QMessageBox::information( this, QObject::tr( "支付提醒" ), InfoText, QMessageBox::Ok, QMessageBox::Cancel ) == QMessageBox::Ok )
+#else
+	if( QMessageBox::information( this, QObject::tr( "Pay Infomation." ), InfoText, QMessageBox::Ok, QMessageBox::Cancel ) == QMessageBox::Ok )
+#endif
+
+	{
+		pthread_cond_signal( &( RechargerHandling::GetInstance()->ChargeToCard ) );
+	}
+	else
+	{
+		this->AllButtonEnable();
+	}
 }
 
 void CardRecharger::on_Recharge15Button_clicked()
 {
-	emit this->AllButtonDisable();
-    QMessageBox::information( this, "a", "15" );
-	emit this->AllButtonEnable();
+	QString InfoText;
+	this->AllButtonDisable();
+
+	if( ui->PayWay_Ali->isChecked() == true )
+	{
+#ifdef CHINESE_OUTPUT
+		InfoText = QObject::tr( "您将使用支付宝" );
+#else
+		InfoText = QObject::tr( "Use Ali-Pay," );
+#endif
+	}
+	else
+	{
+#ifdef CHINESE_OUTPUT
+		InfoText = QObject::tr( "您将使用微信支付" );
+#else
+		InfoText = QObject::tr( "Use WeiXin-Pay," );
+#endif
+	}
+
+#ifdef CHINESE_OUTPUT
+	InfoText += QObject::tr( "充值15元,是否确认？" );
+#else
+	InfoText += QObject::tr( "15 RMB." );
+#endif
+
+#ifdef CHINESE_OUTPUT
+	if( QMessageBox::information( this, QObject::tr( "支付提醒" ), InfoText, QMessageBox::Ok, QMessageBox::Cancel ) == QMessageBox::Ok )
+#else
+	if( QMessageBox::information( this, QObject::tr( "Pay Infomation." ), InfoText, QMessageBox::Ok, QMessageBox::Cancel ) == QMessageBox::Ok )
+#endif
+
+	{
+		pthread_cond_signal( &( RechargerHandling::GetInstance()->ChargeToCard ) );
+	}
+	else
+	{
+		this->AllButtonEnable();
+	}
 }
 
 void CardRecharger::on_Recharge20Button_clicked()
 {
-	emit this->AllButtonDisable();
-    QMessageBox::information( this, "a", "20" );
-	emit this->AllButtonEnable();
+	QString InfoText;
+	this->AllButtonDisable();
+
+	if( ui->PayWay_Ali->isChecked() == true )
+	{
+#ifdef CHINESE_OUTPUT
+		InfoText = QObject::tr( "您将使用支付宝" );
+#else
+		InfoText = QObject::tr( "Use Ali-Pay," );
+#endif
+	}
+	else
+	{
+#ifdef CHINESE_OUTPUT
+		InfoText = QObject::tr( "您将使用微信支付" );
+#else
+		InfoText = QObject::tr( "Use WeiXin-Pay," );
+#endif
+	}
+
+#ifdef CHINESE_OUTPUT
+	InfoText += QObject::tr( "充值20元,是否确认？" );
+#else
+	InfoText += QObject::tr( "20 RMB." );
+#endif
+
+#ifdef CHINESE_OUTPUT
+	if( QMessageBox::information( this, QObject::tr( "支付提醒" ), InfoText, QMessageBox::Ok, QMessageBox::Cancel ) == QMessageBox::Ok )
+#else
+	if( QMessageBox::information( this, QObject::tr( "Pay Infomation." ), InfoText, QMessageBox::Ok, QMessageBox::Cancel ) == QMessageBox::Ok )
+#endif
+
+	{
+		pthread_cond_signal( &( RechargerHandling::GetInstance()->ChargeToCard ) );
+	}
+	else
+	{
+		this->AllButtonEnable();
+	}
 }
 
 void CardRecharger::on_Recharge30Button_clicked()
 {
-	emit this->AllButtonDisable();
-    QMessageBox::information( this, "a", "30" );
-	emit this->AllButtonEnable();
+	QString InfoText;
+	this->AllButtonDisable();
+
+	if( ui->PayWay_Ali->isChecked() == true )
+	{
+#ifdef CHINESE_OUTPUT
+		InfoText = QObject::tr( "您将使用支付宝" );
+#else
+		InfoText = QObject::tr( "Use Ali-Pay," );
+#endif
+	}
+	else
+	{
+#ifdef CHINESE_OUTPUT
+		InfoText = QObject::tr( "您将使用微信支付" );
+#else
+		InfoText = QObject::tr( "Use WeiXin-Pay," );
+#endif
+	}
+
+#ifdef CHINESE_OUTPUT
+	InfoText += QObject::tr( "充值30元,是否确认？" );
+#else
+	InfoText += QObject::tr( "30 RMB." );
+#endif
+
+#ifdef CHINESE_OUTPUT
+	if( QMessageBox::information( this, QObject::tr( "支付提醒" ), InfoText, QMessageBox::Ok, QMessageBox::Cancel ) == QMessageBox::Ok )
+#else
+	if( QMessageBox::information( this, QObject::tr( "Pay Infomation." ), InfoText, QMessageBox::Ok, QMessageBox::Cancel ) == QMessageBox::Ok )
+#endif
+
+	{
+		pthread_cond_signal( &( RechargerHandling::GetInstance()->ChargeToCard ) );
+	}
+	else
+	{
+		this->AllButtonEnable();
+	}
 }
 
 void CardRecharger::on_Recharge50Button_clicked()
 {
-	emit this->AllButtonDisable();
-    QMessageBox::information( this, "a", "50" );
-	emit this->AllButtonEnable();
+	QString InfoText;
+	this->AllButtonDisable();
+
+	if( ui->PayWay_Ali->isChecked() == true )
+	{
+#ifdef CHINESE_OUTPUT
+		InfoText = QObject::tr( "您将使用支付宝" );
+#else
+		InfoText = QObject::tr( "Use Ali-Pay," );
+#endif
+	}
+	else
+	{
+#ifdef CHINESE_OUTPUT
+		InfoText = QObject::tr( "您将使用微信支付" );
+#else
+		InfoText = QObject::tr( "Use WeiXin-Pay," );
+#endif
+	}
+
+#ifdef CHINESE_OUTPUT
+	InfoText += QObject::tr( "充值50元,是否确认？" );
+#else
+	InfoText += QObject::tr( "50 RMB." );
+#endif
+
+#ifdef CHINESE_OUTPUT
+	if( QMessageBox::information( this, QObject::tr( "支付提醒" ), InfoText, QMessageBox::Ok, QMessageBox::Cancel ) == QMessageBox::Ok )
+#else
+	if( QMessageBox::information( this, QObject::tr( "Pay Infomation." ), InfoText, QMessageBox::Ok, QMessageBox::Cancel ) == QMessageBox::Ok )
+#endif
+
+	{
+		pthread_cond_signal( &( RechargerHandling::GetInstance()->ChargeToCard ) );
+	}
+	else
+	{
+		this->AllButtonEnable();
+	}
 }
 
 void CardRecharger::on_Recharge80Button_clicked()
 {
-	emit this->AllButtonDisable();
-    QMessageBox::information( this, "a", "80" );
-	emit this->AllButtonEnable();
+	QString InfoText;
+	this->AllButtonDisable();
+
+	if( ui->PayWay_Ali->isChecked() == true )
+	{
+#ifdef CHINESE_OUTPUT
+		InfoText = QObject::tr( "您将使用支付宝" );
+#else
+		InfoText = QObject::tr( "Use Ali-Pay," );
+#endif
+	}
+	else
+	{
+#ifdef CHINESE_OUTPUT
+		InfoText = QObject::tr( "您将使用微信支付" );
+#else
+		InfoText = QObject::tr( "Use WeiXin-Pay," );
+#endif
+	}
+
+#ifdef CHINESE_OUTPUT
+	InfoText += QObject::tr( "充值80元,是否确认？" );
+#else
+	InfoText += QObject::tr( "80 RMB." );
+#endif
+
+#ifdef CHINESE_OUTPUT
+	if( QMessageBox::information( this, QObject::tr( "支付提醒" ), InfoText, QMessageBox::Ok, QMessageBox::Cancel ) == QMessageBox::Ok )
+#else
+	if( QMessageBox::information( this, QObject::tr( "Pay Infomation." ), InfoText, QMessageBox::Ok, QMessageBox::Cancel ) == QMessageBox::Ok )
+#endif
+
+	{
+		pthread_cond_signal( &( RechargerHandling::GetInstance()->ChargeToCard ) );
+	}
+	else
+	{
+		this->AllButtonEnable();
+	}
 }
 
 void CardRecharger::on_Recharge100Button_clicked()
 {
-	emit this->AllButtonDisable();
-    QMessageBox::information( this, "a", "100" );
-	emit this->AllButtonEnable();
+	QString InfoText;
+	this->AllButtonDisable();
+
+	if( ui->PayWay_Ali->isChecked() == true )
+	{
+#ifdef CHINESE_OUTPUT
+		InfoText = QObject::tr( "您将使用支付宝" );
+#else
+		InfoText = QObject::tr( "Use Ali-Pay," );
+#endif
+	}
+	else
+	{
+#ifdef CHINESE_OUTPUT
+		InfoText = QObject::tr( "您将使用微信支付" );
+#else
+		InfoText = QObject::tr( "Use WeiXin-Pay," );
+#endif
+	}
+
+#ifdef CHINESE_OUTPUT
+	InfoText += QObject::tr( "充值100元,是否确认？" );
+#else
+	InfoText += QObject::tr( "100 RMB." );
+#endif
+
+#ifdef CHINESE_OUTPUT
+	if( QMessageBox::information( this, QObject::tr( "支付提醒" ), InfoText, QMessageBox::Ok, QMessageBox::Cancel ) == QMessageBox::Ok )
+#else
+	if( QMessageBox::information( this, QObject::tr( "Pay Infomation." ), InfoText, QMessageBox::Ok, QMessageBox::Cancel ) == QMessageBox::Ok )
+#endif
+
+	{
+		pthread_cond_signal( &( RechargerHandling::GetInstance()->ChargeToCard ) );
+	}
+	else
+	{
+		this->AllButtonEnable();
+	}
 }
 
 void CardRecharger::on_Recharge200Button_clicked()
 {
-	emit this->AllButtonDisable();
-    QMessageBox::information( this, "a", "200" );
-	emit this->AllButtonEnable();
+	QString InfoText;
+	this->AllButtonDisable();
+
+	if( ui->PayWay_Ali->isChecked() == true )
+	{
+#ifdef CHINESE_OUTPUT
+		InfoText = QObject::tr( "您将使用支付宝" );
+#else
+		InfoText = QObject::tr( "Use Ali-Pay," );
+#endif
+	}
+	else
+	{
+#ifdef CHINESE_OUTPUT
+		InfoText = QObject::tr( "您将使用微信支付" );
+#else
+		InfoText = QObject::tr( "Use WeiXin-Pay," );
+#endif
+	}
+
+#ifdef CHINESE_OUTPUT
+	InfoText += QObject::tr( "充值200元,是否确认？" );
+#else
+	InfoText += QObject::tr( "200 RMB." );
+#endif
+
+#ifdef CHINESE_OUTPUT
+	if( QMessageBox::information( this, QObject::tr( "支付提醒" ), InfoText, QMessageBox::Ok, QMessageBox::Cancel ) == QMessageBox::Ok )
+#else
+	if( QMessageBox::information( this, QObject::tr( "Pay Infomation." ), InfoText, QMessageBox::Ok, QMessageBox::Cancel ) == QMessageBox::Ok )
+#endif
+
+	{
+		pthread_cond_signal( &( RechargerHandling::GetInstance()->ChargeToCard ) );
+	}
+	else
+	{
+		this->AllButtonEnable();
+	}
 }
 
 void CardRecharger::on_GreyRecordButton_clicked()
 {
 	emit this->AllButtonDisable();
-    QMessageBox::information( this, "a", "grey" );
+	QMessageBox::information( this, "a", "grey" );
 	emit this->AllButtonEnable();
 }
 
 
 void CardRecharger::AllButtonDisable()
 {
-    ui->Recharge5Button->setEnabled( false );
-    ui->Recharge10Button->setEnabled( false );
-    ui->Recharge15Button->setEnabled( false );
-    ui->Recharge20Button->setEnabled( false );
-    ui->Recharge30Button->setEnabled( false );
-    ui->Recharge50Button->setEnabled( false );
-    ui->Recharge80Button->setEnabled( false );
-    ui->Recharge100Button->setEnabled( false );
-    ui->Recharge200Button->setEnabled( false );
-    ui->GreyRecordButton->setEnabled( false );
+	ui->Recharge5Button->setEnabled( false );
+	ui->Recharge10Button->setEnabled( false );
+	ui->Recharge15Button->setEnabled( false );
+	ui->Recharge20Button->setEnabled( false );
+	ui->Recharge30Button->setEnabled( false );
+	ui->Recharge50Button->setEnabled( false );
+	ui->Recharge80Button->setEnabled( false );
+	ui->Recharge100Button->setEnabled( false );
+	ui->Recharge200Button->setEnabled( false );
+	ui->GreyRecordButton->setEnabled( false );
+	ui->PayWay_Ali->setEnabled( false );
+	ui->PayWay_WeiXin->setEnabled( false );
 }
 
 void CardRecharger::AllButtonEnable()
 {
-    ui->Recharge5Button->setEnabled( true );
-    ui->Recharge10Button->setEnabled( true );
-    ui->Recharge15Button->setEnabled( true );
-    ui->Recharge20Button->setEnabled( true );
-    ui->Recharge30Button->setEnabled( true );
-    ui->Recharge50Button->setEnabled( true );
-    ui->Recharge80Button->setEnabled( true );
-    ui->Recharge100Button->setEnabled( true );
-    ui->Recharge200Button->setEnabled( true );
-    ui->GreyRecordButton->setEnabled( true );
+	ui->Recharge5Button->setEnabled( true );
+	ui->Recharge10Button->setEnabled( true );
+	ui->Recharge15Button->setEnabled( true );
+	ui->Recharge20Button->setEnabled( true );
+	ui->Recharge30Button->setEnabled( true );
+	ui->Recharge50Button->setEnabled( true );
+	ui->Recharge80Button->setEnabled( true );
+	ui->Recharge100Button->setEnabled( true );
+	ui->Recharge200Button->setEnabled( true );
+	ui->GreyRecordButton->setEnabled( true );
+	ui->PayWay_Ali->setEnabled( true );
+	ui->PayWay_WeiXin->setEnabled( true );
 }
 
 
@@ -133,6 +466,16 @@ void CardRecharger::SetStatusLabel(QString newstatus)
 }
 
 
+void CardRecharger::on_PayWay_Ali_clicked()
+{
+	ui->PayWay_Ali->setChecked( true );
+	ui->PayWay_WeiXin->setChecked( false );
+	RechargerHandling::GetInstance()->PayWay = RechargerHandling::AliPay;
+}
 
-
-
+void CardRecharger::on_PayWay_WeiXin_clicked()
+{
+	ui->PayWay_Ali->setChecked( false );
+	ui->PayWay_WeiXin->setChecked( true );
+	RechargerHandling::GetInstance()->PayWay = RechargerHandling::WeiXinPay;
+}

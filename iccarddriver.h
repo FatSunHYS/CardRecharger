@@ -1,7 +1,6 @@
 #ifndef ICCARDDRIVER_H
 #define ICCARDDRIVER_H
 
-
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -9,22 +8,11 @@
 #include <errno.h>
 #include <string.h>
 
-#include <QObject>
 
-class ICCardDriver : public QObject
+class ICCardDriver
 {
-	Q_OBJECT
 public:
 	static ICCardDriver* GetICCardDirverInstance();
-	int set_speed( int speed );
-	int set_parity( int databits, int stopbits, int parity );
-	int set_timeout();
-	int pacarddll_arm(unsigned char* device,
-					  unsigned char sendlen,
-					  unsigned char* sendbuf,
-					  unsigned char* reclen,
-					  unsigned char* recbuf,
-					  unsigned char Delayms);
 	int readb90card_arm(unsigned char* device,
 						unsigned char keymode,
 						unsigned char secnum,
@@ -61,12 +49,20 @@ private:
 	fd_set fds;
 	struct timeval tv;
 
-	explicit ICCardDriver(QObject *parent = 0);
+	ICCardDriver();
 	~ICCardDriver();
 
-signals:
+	int set_speed( int speed );
+	int set_parity( int databits, int stopbits, int parity );
+	int set_timeout();
+	int pacarddll_arm(unsigned char* device,
+					  unsigned char sendlen,
+					  unsigned char* sendbuf,
+					  unsigned char* reclen,
+					  unsigned char* recbuf,
+					  unsigned char Delayms);
 
-public slots:
+
 };
 
 

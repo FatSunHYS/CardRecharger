@@ -16,6 +16,7 @@ public:
 	QString CardRechargerClientID;
 	QString CardRechargerClientPassword;
 	QString CardRechargerServerURL;
+	QString DeviceSerials;
 
 	explicit CardRecharger(QWidget *parent = 0);
 	~CardRecharger();
@@ -45,6 +46,10 @@ private slots:
     void on_Recharge200Button_clicked();
 
     void on_GreyRecordButton_clicked();
+
+	void on_PayWay_Ali_clicked();
+
+	void on_PayWay_WeiXin_clicked();
 
 private:
 	Ui::CardRecharger *ui;

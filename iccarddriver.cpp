@@ -1,5 +1,6 @@
 #include "iccarddriver.h"
 
+#include <QObject>
 #include <QtDebug>
 
 #include <stdio.h>
@@ -15,7 +16,7 @@ const int ICCardDriver::name_arr[] = { 115200, 57600, 38400, 19200, 9600, 4800, 
 
 
 
-ICCardDriver::ICCardDriver(QObject *parent) : QObject(parent)
+ICCardDriver::ICCardDriver()
 {
 
 }
@@ -55,15 +56,15 @@ int ICCardDriver::set_speed( int speed )
 			status = tcsetattr( this->COM_FD, TCSANOW, &Opt);
 			if (status != 0)
 			{
-				qDebug() << "Failed: Set speed error!\n";
+				qDebug() << QObject::tr( "Failed: Set speed error!\n" );
 				return status;
 			}
-			qDebug() << "SUCCESS: Set speed ok!\n";
+			qDebug() << QObject::tr( "SUCCESS: Set speed ok!\n" );
 			tcflush( this->COM_FD,TCIOFLUSH);
 			return 0;
 		}
 	}
-	qDebug() << "Failed: Speed out of range!\n";
+	qDebug() << QObject::tr( "Failed: Speed out of range!\n" );
 	return 1000;
 }
 
@@ -74,7 +75,7 @@ int ICCardDriver::set_parity(int databits, int stopbits, int parity)
 
 	if(tcgetattr( this->COM_FD,&options) != 0)
 	{
-		qDebug() << "Failed: Get parity error!\n";
+		qDebug() << QObject::tr( "Failed: Get parity error!\n" );
 		return 1;
 	}
 	options.c_cflag &= ~CSIZE;
@@ -88,7 +89,7 @@ int ICCardDriver::set_parity(int databits, int stopbits, int parity)
 		options.c_cflag |= CS8;
 		break;
 	default:
-		qDebug() <<"Failed: Unsupported data sizen\n";
+		qDebug() << QObject::tr( "Failed: Unsupported data sizen\n" );
 		return 2;
 	}
 
@@ -116,7 +117,7 @@ int ICCardDriver::set_parity(int databits, int stopbits, int parity)
 		options.c_cflag &= ~CSTOPB;
 		break;
 	default:
-		qDebug() << "Failed: Unsupported parity\n";
+		qDebug() << QObject::tr( "Failed: Unsupported parity\n" );
 		return 3;
 	}
 
@@ -129,7 +130,7 @@ int ICCardDriver::set_parity(int databits, int stopbits, int parity)
 		options.c_cflag |= CSTOPB;
 		break;
 	default:
-		qDebug() << "Failed: Unsupported stop bits\n";
+		qDebug() << QObject::tr( "Failed: Unsupported stop bits\n" );
 		return 3;
 	}
 
@@ -148,11 +149,11 @@ int ICCardDriver::set_parity(int databits, int stopbits, int parity)
 
 	if (tcsetattr( this->COM_FD,TCSANOW,&options) != 0)
 	{
-		qDebug() << "Failed: Set Comm options error!\n";
+		qDebug() << QObject::tr( "Failed: Set Comm options error!\n" );
 		return 4;
 	}
 
-	qDebug() << "SUCCESS: Set Comm options ok!\n";
+	qDebug() << QObject::tr( "SUCCESS: Set Comm options ok!\n" );
 	return 0;
 }
 
@@ -167,11 +168,11 @@ int ICCardDriver::set_timeout()
 
 	if(select( this->COM_FD + 1, &this->fds, NULL, NULL, &this->tv) <= 0)
 	{
-		qDebug() << "Failed: set timeout error!\n";
+		qDebug() << QObject::tr( "Failed: set timeout error!\n" );
 		return 1;
 	}
 
-	qDebug() << "SUCCESS: set timeout ok!\n";
+	qDebug() << QObject::tr( "SUCCESS: set timeout ok!\n" );
 	return 0;
 }
 
@@ -199,7 +200,7 @@ int ICCardDriver::pacarddll_arm(unsigned char* device,
 	this->COM_FD = open(com_addr, O_RDWR | O_NOCTTY);
 	if(-1 == this->COM_FD)
 	{
-		qDebug() << "Failed: Open Comm Error!\n";
+		qDebug() << QObject::tr( "Failed: Open Comm Error!\n" );
 		return 100;
 	}
 
@@ -212,13 +213,13 @@ int ICCardDriver::pacarddll_arm(unsigned char* device,
 
 	if(0 != this->set_speed( 57600 ) )
 	{
-		qDebug() << "Failed: Set speed error!\n";
+		qDebug() << QObject::tr( "Failed: Set speed error!\n" );
 		return 2;
 	}
 
 	if(0 != this->set_parity( 8, 1, 'N' ) )
 	{
-		qDebug() << "Failed: Set parity error!\n";
+		qDebug() << QObject::tr( "Failed: Set parity error!\n" );
 		return 3;
 	}
 
@@ -230,12 +231,12 @@ int ICCardDriver::pacarddll_arm(unsigned char* device,
 	nwrite = write( this->COM_FD, buf, 1);
 	if(1 != nwrite)
 	{
-		qDebug() << "Failed: Send machineno error!\n";
+		qDebug() << QObject::tr( "Failed: Send machineno error!\n" );
 		close( this->COM_FD );
 		return 101;
 	}
 
-	qDebug() << "SUCCESS: Send machineno ok!\n";
+	qDebug() << QObject::tr( "SUCCESS: Send machineno ok!\n" );
 	jym = buf[0];
 //	sleep(Delayms);
 
@@ -243,12 +244,12 @@ int ICCardDriver::pacarddll_arm(unsigned char* device,
 	nwrite = write( this->COM_FD, buf, 1);
 	if(1 != nwrite)
 	{
-		qDebug() << "Failed: Send data length error!\n";
+		qDebug() << QObject::tr( "Failed: Send data length error!\n" );
 		close( this->COM_FD );
 		return 101;
 	}
 
-	qDebug() << "SUCCESS: Send data length ok!\n";
+	qDebug() << QObject::tr( "SUCCESS: Send data length ok!\n" );
 	jym = jym ^ buf[0];
 //	sleep(Delayms);
 
@@ -258,7 +259,7 @@ int ICCardDriver::pacarddll_arm(unsigned char* device,
 		nwrite = write( this->COM_FD, buf, 1);
 		if(1 != nwrite)
 		{
-			qDebug() << "Failed: Send data error!\n";
+			qDebug() << QObject::tr( "Failed: Send data error!\n" );
 			close( this->COM_FD );
 			return 101;
 		}
@@ -407,7 +408,7 @@ int ICCardDriver::readb90card_arm(unsigned char* device,	//串口号
 	czmm[1]=recbuf[20];
 	czmm[2]=recbuf[21];
 
-	qDebug() << "Read card status : " << status << endl;
+	qDebug() << QObject::tr( "Read card status : " ) << status << endl;
 
 	if(status)
 	{
