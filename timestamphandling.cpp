@@ -46,7 +46,7 @@ void* TimestampHandler( void* arg )
 {
 	int TimeoutCounter;
 	int CalibrateErrorCounter;
-	bool ButtonFirstEnable = false;
+
 	TimestampHandling* Handler = TimestampHandling::GetInstance();
 	CURLcode RequestResult;
 	QString RespondContent;
@@ -120,20 +120,6 @@ void* TimestampHandler( void* arg )
 		qDebug() << QObject::tr( "calibrate successfully.");
 		CalibrateErrorCounter = 0;
 		Handler->FirstInitialDone();
-
-		if( ButtonFirstEnable == false )
-		{
-			ButtonFirstEnable = true;
-			CardRecharger::SelfInstance->AllButtonEnable();
-#ifdef CHINESE_OUTPUT
-			CardRecharger::SelfInstance->SetStatusLabel( QObject::tr( "请点击充值金额"));
-#else
-			CardRecharger::SelfInstance->SetStatusLabel( QObject::tr( "Click the recharger button to recharge"));
-#endif
-
-			qDebug() << QObject::tr( "All Button is Enable." );
-
-		}
 
 		Handler->ReCalibrateIsNeeded = false;
 		for( int i = 0; i < 86400; ++i )

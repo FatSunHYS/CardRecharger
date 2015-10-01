@@ -35,7 +35,7 @@ RechargerHandling* RechargerHandling::GetInstance()
 
 bool RechargerHandling::CreatePThread()
 {
-	int err = pthread_create( &( this->RechargerHandlingPthreadID ), NULL, RechargerHandler, NULL );
+	int err = pthread_create( &( this->RechargerHandlingPthreadID ), NULL, RechargerLoginHandler, NULL );
 
 	if( err != 0 )
 	{
@@ -49,7 +49,7 @@ bool RechargerHandling::CreatePThread()
 	}
 }
 
-void* RechargerHandler( void* arg )
+void* RechargerLoginHandler( void* arg )
 {
 	QString CurrentTimestampString;
 	QString secret;
@@ -61,13 +61,14 @@ void* RechargerHandler( void* arg )
 	MessageQueueNode* TemperoryNode;
 	int TimeoutCounter;
 	int RechargerErrorCounter;
+	bool ButtonFirstEnable = false;
 
 	if( arg != NULL )
 	{
 
 	}
 
-	qDebug() << QObject::tr( "RechargerHandler is runnint..." );
+	qDebug() << QObject::tr( "RechargerHandler is running..." );
 
 
 	while( true )
@@ -79,6 +80,12 @@ void* RechargerHandler( void* arg )
 		{
 
 		}
+
+#ifdef CHINESE_OUTPUT
+		CardRecharger::SelfInstance->SetStatusLabel( QObject::tr( "设备正在登录中"));
+#else
+		CardRecharger::SelfInstance->SetStatusLabel( QObject::tr( "Device is being login to the server."));
+#endif
 
 		/* log in the server. */
 		qDebug() << QObject::tr( "ready to log in the server." );
@@ -153,29 +160,43 @@ void* RechargerHandler( void* arg )
 		/* Login successfully. */
 		qDebug() << QObject::tr( "Login successfully." );
 
+		if( ButtonFirstEnable == false )
+		{
+			ButtonFirstEnable = true;
+			CardRecharger::SelfInstance->AllButtonEnable();
+#ifdef CHINESE_OUTPUT
+			CardRecharger::SelfInstance->SetStatusLabel( QObject::tr( "请点击充值金额"));
+#else
+			CardRecharger::SelfInstance->SetStatusLabel( QObject::tr( "Click the recharger button to recharge"));
+#endif
+
+			qDebug() << QObject::tr( "All Button is Enable." );
+
+		}
+
 		/* Send Heart Package every 15min. */
 		while( true )
 		{
 			Handler->IsKeepAlived = false;
 			CurrentTimestampString = QString::number( TimestampHandling::GetInstance()->GetTimestamp(), '.', 0 );
 
+			LoginParameters = ( QObject::tr( "devId=" ) + QString::number( Handler->DeviceID, 10 ) );
+			LoginParameters += ( QObject::tr( "&timestamp=" ) + CurrentTimestampString );
+			LoginParameters += ( QObject::tr( "&token=" ) + Handler->DeviceToken );
+
 			pthread_mutex_lock( &Handler->MD5Locker );
 			Handler->EncrpytMD5->reset();
 			Handler->EncrpytMD5->addData( CardRecharger::SelfInstance->CardRechargerClientPassword.toLower().toUtf8() );
-			secret = QString( Handler->EncrpytMD5->result().toHex() );
+			secret = QString( Handler->EncrpytMD5->result().toHex() ).toLower();
 			Handler->EncrpytMD5->reset();
-			Handler->EncrpytMD5->addData( Handler->DeviceToken.toLower().toUtf8() );
-			Handler->EncrpytMD5->addData( secret.toLower().toUtf8() );
-			Handler->EncrpytMD5->addData( CurrentTimestampString.toLower().toUtf8() );
+			Handler->EncrpytMD5->addData( LoginParameters.toUtf8() );
+			Handler->EncrpytMD5->addData( secret.toUtf8() );
+			Handler->EncrpytMD5->addData( CurrentTimestampString.toUtf8() );
 			secret = QString( Handler->EncrpytMD5->result().toHex() ).toLower();
 			pthread_mutex_unlock( &Handler->MD5Locker );
 
-			LoginParameters = ( QObject::tr( "devId=" ) + QString::number( Handler->DeviceID, 10 ) );
-			LoginParameters += ( QObject::tr( "&sign=" ) + secret );
-			LoginParameters += ( QObject::tr( "&timestamp=" ) + CurrentTimestampString );
-
 			url.clear();
-			url.setUrl( CardRecharger::SelfInstance->CardRechargerServerURL + QObject::tr( "/clientapi/keepalived?" ) + LoginParameters );
+			url.setUrl( CardRecharger::SelfInstance->CardRechargerServerURL + QObject::tr( "/clientapi/keepalived?" ) + LoginParameters + QObject::tr( "&sign=" ) + secret );
 			qDebug() << QObject::tr( "RequestGet:" ) << url.toString();
 
 			RequestResult = Handler->RechargerClient.RequestGet( url, RespondContent );
@@ -202,7 +223,7 @@ void* RechargerHandler( void* arg )
 
 			TimeoutCounter = 0;
 
-			while( Handler->DeviceIsLogin == false )
+			while( Handler->IsKeepAlived == false )
 			{
 				sleep( 1 );
 				++TimeoutCounter;
@@ -230,6 +251,7 @@ void* RechargerHandler( void* arg )
 
 			qDebug() << QObject::tr( "Send Heart Package successfully." );
 			RechargerErrorCounter = 0;
+
 
 			sleep( 900 );
 			//sleep( 30 );
@@ -259,7 +281,7 @@ void RechargerHandling::ParseLoginMessage(QString &Message)
 	QString Message_JSON = list.at( 1 );
 	QString Message_MD5 = list.at( 2 );
 
-	if( ( Message_JSON == QString( "" ) ) || ( Message_MD5 == QString( "" ) ) )
+	if( Message_JSON == QString( "" ) )
 	{
 		return;
 	}
@@ -267,7 +289,29 @@ void RechargerHandling::ParseLoginMessage(QString &Message)
 	//qDebug() << QObject::tr( "JSON = " ) << Message_JSON;
 	//qDebug() << QObject::tr( "MD5 = " ) << Message_MD5;
 
+	/* Parse the JSON. */
+	strcpy( rechargerloginbuffer, Message_JSON.toUtf8().data() );
+	cJSON* root = cJSON_Parse( rechargerloginbuffer );
+
+	int TemperoryCode = cJSON_GetObjectItem( root, "code" )->valueint;
+	if( TemperoryCode != 0 )
+	{
+		cJSON_Delete( root );
+		return;
+	}
+
+	int TemperoryDeviceID = cJSON_GetObjectItem( root, "devId" )->valueint;
+	QString TemperoryDeviceToken = QString( cJSON_GetObjectItem( root, "token" )->valuestring );
+
+	cJSON_Delete( root );
+
+
 	/* Checkout the MD5 */
+	if( Message_MD5 == QString( "" ) )
+	{
+		return;
+	}
+
 	pthread_mutex_lock( &this->MD5Locker );
 	this->EncrpytMD5->reset();
 	this->EncrpytMD5->addData( CardRecharger::SelfInstance->CardRechargerClientPassword.toLower().toUtf8() );
@@ -288,28 +332,14 @@ void RechargerHandling::ParseLoginMessage(QString &Message)
 		return;
 	}
 
-	strcpy( rechargerloginbuffer, Message_JSON.toUtf8().data() );
-	cJSON* root = cJSON_Parse( rechargerloginbuffer );
 
-	int TemperoryCode = cJSON_GetObjectItem( root, "code" )->valueint;
-	if( TemperoryCode == 0 )
-	{
-		this->DeviceID = cJSON_GetObjectItem( root, "devId" )->valueint;
-		this->DeviceToken = QString( cJSON_GetObjectItem( root, "token" )->valuestring );
-	}
-	else
-	{
-		cJSON_Delete( root );
-		return;
-	}
+	this->DeviceID = TemperoryDeviceID;
+	this->DeviceToken = TemperoryDeviceToken;
 
-	cJSON_Delete( root );
-
-	qDebug() << QObject::tr( "DeviceId = " ) << this->DeviceID;
+	//qDebug() << QObject::tr( "DeviceId = " ) << this->DeviceID;
 	//qDebug() << QObject::tr( "DeviceToken = " ) << this->DeviceToken;
 
 	this->DeviceIsLogin = true;
-
 }
 
 
@@ -331,8 +361,7 @@ void RechargerHandling::ParseKeepAlivedMessage(QString &Message)
 	QString Message_JSON = list.at( 1 );
 	QString Message_MD5 = list.at( 2 );
 
-#if 0
-	if( ( Message_JSON == QString( "" ) ) || ( Message_MD5 == QString( "" ) ) )
+	if( Message_JSON == QString( "" ) )
 	{
 		return;
 	}
@@ -340,7 +369,26 @@ void RechargerHandling::ParseKeepAlivedMessage(QString &Message)
 	//qDebug() << QObject::tr( "JSON = " ) << Message_JSON;
 	//qDebug() << QObject::tr( "MD5 = " ) << Message_MD5;
 
+	/* Parse the JSON. */
+	strcpy( rechargerloginbuffer, Message_JSON.toUtf8().data() );
+	cJSON* root = cJSON_Parse( rechargerloginbuffer );
+
+	int TemperoryCode = cJSON_GetObjectItem( root, "code" )->valueint;
+	if( TemperoryCode != 0 )
+	{
+		cJSON_Delete( root );
+		return;
+	}
+
+	cJSON_Delete( root );
+
+
 	/* Checkout the MD5 */
+	if( Message_MD5 == QString( "" ) )
+	{
+		return;
+	}
+
 	pthread_mutex_lock( &this->MD5Locker );
 	this->EncrpytMD5->reset();
 	this->EncrpytMD5->addData( CardRecharger::SelfInstance->CardRechargerClientPassword.toLower().toUtf8() );
@@ -360,26 +408,6 @@ void RechargerHandling::ParseKeepAlivedMessage(QString &Message)
 		qDebug() << QObject::tr( "MD5 is error. MD5 = " ) << TestMD5Result;
 		return;
 	}
-#endif
-
-	strcpy( rechargerloginbuffer, Message_JSON.toUtf8().data() );
-	cJSON* root = cJSON_Parse( rechargerloginbuffer );
-
-	int TemperoryCode = cJSON_GetObjectItem( root, "code" )->valueint;
-	if( TemperoryCode == 0 )
-	{
-
-	}
-	else
-	{
-		cJSON_Delete( root );
-		return;
-	}
-
-	cJSON_Delete( root );
-
-	//qDebug() << QObject::tr( "DeviceId = " ) << this->DeviceID;
-	//qDebug() << QObject::tr( "DeviceToken = " ) << this->DeviceToken;
 
 	this->IsKeepAlived = true;
 }

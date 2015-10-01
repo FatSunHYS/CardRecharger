@@ -34,8 +34,6 @@ private:
 
 };
 
-
-
-void* RechargerHandler( void* arg );
+void* RechargerLoginHandler( void* arg );
 
 #endif // RECHARGERHANDLING_H
