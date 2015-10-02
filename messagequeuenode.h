@@ -7,7 +7,6 @@ class MessageQueueNode
 {
 public:
 
-	bool IsError;
 	QString MessageContent;
 	int MessageGroupID;
 	int MessageAppID;

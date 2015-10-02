@@ -27,6 +27,8 @@ TimestampHandling::TimestampHandling()
 	this->unixtimestamp = 0;
 	this->FirstInitialed = false;
 	this->ReCalibrateIsNeeded = false;
+	pthread_mutex_init( &this->TimestampLocker, NULL );
+	pthread_cond_init( &this->RefreshCondition, NULL );
 }
 
 
@@ -44,9 +46,6 @@ TimestampHandling* TimestampHandling::GetInstance()
 
 void* TimestampHandler( void* arg )
 {
-	int TimeoutCounter;
-	int CalibrateErrorCounter;
-
 	TimestampHandling* Handler = TimestampHandling::GetInstance();
 	CURLcode RequestResult;
 	QString RespondContent;
@@ -57,68 +56,45 @@ void* TimestampHandler( void* arg )
 
 	}
 
+	pthread_mutex_lock( &Handler->TimestampLocker );
 	qDebug() << QObject::tr( "TimestampHandler is running..." );
 
 	QUrl url( CardRecharger::SelfInstance->CardRechargerServerURL + QObject::tr( "/clientapi/getSysTime" ) );
 	qDebug() << QObject::tr( "RequestGet:" ) << url.toString();
 
-	CalibrateErrorCounter = 0;
 	while( true )
 	{
 		Handler->SetTimestampRefreshState( false );
 
 		RequestResult = Handler->TimestampClient.RequestGet( url, RespondContent );
-
-		//qDebug() << QObject::tr( "request result = " ) << requestresult;
-		//qDebug() << QObject::tr( "test buffer = " ) << QString::fromStdString( ReceiveContent );
+		if( RequestResult != CURLE_OK )
+		{
+			qDebug() << QObject::tr( "Request Time Error!" );
+			continue;
+		}
 
 		TemperoryNode = new MessageQueueNode();
 		TemperoryNode->MessageGroupID = MessageHandling::RechargerMessages;
 		TemperoryNode->MessageAppID = MessageHandling::GetSysTime;
-
-		if( RequestResult == CURLE_OK )
-		{
-			TemperoryNode->IsError = false;
-			TemperoryNode->MessageContent = RespondContent;
-		}
-		else
-		{
-			TemperoryNode->IsError = true;
-			TemperoryNode->MessageContent = QObject::tr( "NULL" );
-		}
+		TemperoryNode->MessageContent = RespondContent;
 
 		MessageHandling::GetInstance()->MessageQueuePointer->MessageEnqueue( TemperoryNode );
 		TemperoryNode = NULL;
 
-		TimeoutCounter = 0;
+		pthread_cond_wait( &Handler->RefreshCondition, &Handler->TimestampLocker );
 
-		while( Handler->GetTimestampRefreshState() == false )
+		if( Handler->GetTimestampRefreshState() == false )
 		{
-			sleep( 1 );
-			++TimeoutCounter;
-			if( TimeoutCounter >= 3 )
-			{
-				break;
-			}
-		}
-
-		if( TimeoutCounter >= 3 )
-		{
-			TimeoutCounter = 0;
-			++CalibrateErrorCounter;
-			if( CalibrateErrorCounter >= 5 )
-			{
 #ifdef CHINESE_OUTPUT
-				CardRecharger::SelfInstance->SetStatusLabel( tr( "网络断开，请检查网络！"));
+			CardRecharger::SelfInstance->SetStatusLabel( tr( "网络断开，请检查网络！"));
 #else
-				CardRecharger::SelfInstance->SetStatusLabel( QObject::tr( "Please reconnect the network!"));
+			CardRecharger::SelfInstance->SetStatusLabel( QObject::tr( "Please reconnect the network!"));
 #endif
-			}
+			sleep( 2 );
 			continue;
 		}
 
 		qDebug() << QObject::tr( "calibrate successfully.");
-		CalibrateErrorCounter = 0;
 		Handler->FirstInitialDone();
 
 		Handler->ReCalibrateIsNeeded = false;
@@ -220,6 +196,8 @@ void TimestampHandling::ParseGetSysTimeMessage(QString &Message)
 	}
 
 	cJSON_Delete( root );
+
+	pthread_cond_signal( &this->RefreshCondition );
 }
 
 

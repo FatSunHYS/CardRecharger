@@ -20,6 +20,8 @@ class TimestampHandling
 public:
 	HttpClient TimestampClient;
 	bool ReCalibrateIsNeeded;
+	pthread_mutex_t TimestampLocker;
+	pthread_cond_t RefreshCondition;
 
 	static TimestampHandling* GetInstance();
 	void CalibrateTimestamp( double newtimestamp );

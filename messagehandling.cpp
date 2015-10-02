@@ -86,17 +86,7 @@ void MessageHandling::ParsingRechargerMessages( MessageQueueNode* message )
 {
 	//qDebug() << QObject::tr( "IsError:") << message->IsError;
 
-	if( message->IsError )
-	{
-		//qDebug() << message->MessageContent;
-		qDebug() << QObject::tr( "Message is error!" );
-		return;
-	}
-	else
-	{
-		qDebug() << message->MessageContent;
-	}
-
+	qDebug() << message->MessageContent;
 
 	switch( message->MessageAppID )
 	{
@@ -115,6 +105,12 @@ void MessageHandling::ParsingRechargerMessages( MessageQueueNode* message )
 		case MessageHandling::KeepAlived:
 		{
 			RechargerHandling::GetInstance()->ParseKeepAlivedMessage( message->MessageContent );
+			break;
+		}
+
+		case MessageHandling::Precreate:
+		{
+			RechargerHandling::GetInstance()->ParsePrecreateMessage( message->MessageContent );
 			break;
 		}
 

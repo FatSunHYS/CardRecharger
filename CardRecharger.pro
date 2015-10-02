@@ -43,6 +43,7 @@ FORMS    += cardrecharger.ui \
 
 LIBS += -lpthread
 LIBS += -lcurl
+LIBS += -lqrencode
 
 DEFINES += CURL_STATICLIB
 

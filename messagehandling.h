@@ -23,7 +23,8 @@ public:
 	{
 		GetSysTime = 0,
 		Login,
-		KeepAlived
+		KeepAlived,
+		Precreate
 	}MessageAppID;
 	MessageQueue* MessageQueuePointer;
 

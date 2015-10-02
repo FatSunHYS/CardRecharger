@@ -3,10 +3,13 @@
 
 #include <QCryptographicHash>
 #include <QString>
+#include <QPainter>
+
 
 #include <pthread.h>
 
 #include "httpclient.h"
+#include "qrencode.h"
 
 class RechargerHandling
 {
@@ -20,12 +23,26 @@ public:
 	HttpClient RechargerClient;
 	QCryptographicHash* EncrpytMD5;
 	pthread_mutex_t MD5Locker;
-	pthread_mutex_t RechargeLocker;
-	pthread_cond_t ChargeToCard;
+	pthread_mutex_t RechargerLoginLocker;
+	pthread_cond_t LoginCondition;
+	pthread_cond_t HeartPackageCondition;
+	pthread_mutex_t RechargerChargeLocker;
+	pthread_cond_t ChargeAction;
+	pthread_cond_t RequestQRCode;
 	int DeviceID;
 	QString DeviceToken;
 	bool DeviceIsLogin;
 	bool IsKeepAlived;
+
+	QString PasswordEdition;
+	QString CardPassword;
+	QString SectionNumber;
+	QString CardNumber;
+	QString CardBalance;
+	QString CardSequenceNumber;
+	QString QRCodeAddress;
+	QString TradeNumber;
+	QString TradeStatus;
 
 	int RechargeValue;
 	_PayWay RechargePayWay;
@@ -34,6 +51,13 @@ public:
 	bool CreatePThread();
 	void ParseLoginMessage( QString& Message );
 	void ParseKeepAlivedMessage( QString& Message );
+	void ParsePrecreateMessage( QString& Message );
+	void DrawQRcodeImage( QRcode* qr, QPainter &painter, int width, int height );
+	void SendUpdateQRImageSignal();
+
+
+signals:
+	void UpdateQRImageClick();
 
 private:
 	static RechargerHandling* PrivateInstance;

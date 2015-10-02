@@ -2,6 +2,7 @@
 #define CARDRECHARGER_H
 
 #include <QDialog>
+#include <QImage>
 
 namespace Ui {
 	class CardRecharger;
@@ -24,6 +25,7 @@ public:
 	void AllButtonEnable();
 	void AllButtonDisable();
 	void SetStatusLabel( QString newstatus );
+	void SetQRLabel(QImage &image );
 
 
 private slots:
@@ -50,6 +52,8 @@ private slots:
 	void on_PayWay_Ali_clicked();
 
 	void on_PayWay_WeiXin_clicked();
+
+	void on_UpdateButton_clicked();
 
 private:
 	Ui::CardRecharger *ui;

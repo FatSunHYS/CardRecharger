@@ -2,6 +2,7 @@
 #include "ui_cardrecharger.h"
 
 #include <QMessageBox>
+#include <QDebug>
 
 #include <pthread.h>
 
@@ -67,7 +68,8 @@ void CardRecharger::on_Recharge5Button_clicked()
 #endif
 
 	{
-		pthread_cond_signal( &( RechargerHandling::GetInstance()->ChargeToCard ) );
+		RechargerHandling::GetInstance()->RechargeValue = 5;
+		pthread_cond_signal( &( RechargerHandling::GetInstance()->ChargeAction ) );
 	}
 	else
 	{
@@ -110,7 +112,8 @@ void CardRecharger::on_Recharge10Button_clicked()
 #endif
 
 	{
-		pthread_cond_signal( &( RechargerHandling::GetInstance()->ChargeToCard ) );
+		RechargerHandling::GetInstance()->RechargeValue = 10;
+		pthread_cond_signal( &( RechargerHandling::GetInstance()->ChargeAction ) );
 	}
 	else
 	{
@@ -153,7 +156,8 @@ void CardRecharger::on_Recharge15Button_clicked()
 #endif
 
 	{
-		pthread_cond_signal( &( RechargerHandling::GetInstance()->ChargeToCard ) );
+		RechargerHandling::GetInstance()->RechargeValue = 15;
+		pthread_cond_signal( &( RechargerHandling::GetInstance()->ChargeAction ) );
 	}
 	else
 	{
@@ -196,7 +200,8 @@ void CardRecharger::on_Recharge20Button_clicked()
 #endif
 
 	{
-		pthread_cond_signal( &( RechargerHandling::GetInstance()->ChargeToCard ) );
+		RechargerHandling::GetInstance()->RechargeValue = 20;
+		pthread_cond_signal( &( RechargerHandling::GetInstance()->ChargeAction ) );
 	}
 	else
 	{
@@ -239,7 +244,8 @@ void CardRecharger::on_Recharge30Button_clicked()
 #endif
 
 	{
-		pthread_cond_signal( &( RechargerHandling::GetInstance()->ChargeToCard ) );
+		RechargerHandling::GetInstance()->RechargeValue = 30;
+		pthread_cond_signal( &( RechargerHandling::GetInstance()->ChargeAction ) );
 	}
 	else
 	{
@@ -282,7 +288,8 @@ void CardRecharger::on_Recharge50Button_clicked()
 #endif
 
 	{
-		pthread_cond_signal( &( RechargerHandling::GetInstance()->ChargeToCard ) );
+		RechargerHandling::GetInstance()->RechargeValue = 50;
+		pthread_cond_signal( &( RechargerHandling::GetInstance()->ChargeAction ) );
 	}
 	else
 	{
@@ -325,7 +332,8 @@ void CardRecharger::on_Recharge80Button_clicked()
 #endif
 
 	{
-		pthread_cond_signal( &( RechargerHandling::GetInstance()->ChargeToCard ) );
+		RechargerHandling::GetInstance()->RechargeValue = 80;
+		pthread_cond_signal( &( RechargerHandling::GetInstance()->ChargeAction ) );
 	}
 	else
 	{
@@ -368,7 +376,8 @@ void CardRecharger::on_Recharge100Button_clicked()
 #endif
 
 	{
-		pthread_cond_signal( &( RechargerHandling::GetInstance()->ChargeToCard ) );
+		RechargerHandling::GetInstance()->RechargeValue = 100;
+		pthread_cond_signal( &( RechargerHandling::GetInstance()->ChargeAction ) );
 	}
 	else
 	{
@@ -411,7 +420,8 @@ void CardRecharger::on_Recharge200Button_clicked()
 #endif
 
 	{
-		pthread_cond_signal( &( RechargerHandling::GetInstance()->ChargeToCard ) );
+		RechargerHandling::GetInstance()->RechargeValue = 200;
+		pthread_cond_signal( &( RechargerHandling::GetInstance()->ChargeAction ) );
 	}
 	else
 	{
@@ -478,4 +488,15 @@ void CardRecharger::on_PayWay_WeiXin_clicked()
 	ui->PayWay_Ali->setChecked( false );
 	ui->PayWay_WeiXin->setChecked( true );
 	RechargerHandling::GetInstance()->PayWay = RechargerHandling::WeiXinPay;
+}
+
+
+void CardRecharger::SetQRLabel(QImage &image)
+{
+	ui->QRcodeImageLabel->setPixmap(QPixmap::fromImage( image));
+}
+
+void CardRecharger::on_UpdateButton_clicked()
+{
+	qDebug() << "button test";
 }
