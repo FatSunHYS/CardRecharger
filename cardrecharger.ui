@@ -223,7 +223,7 @@
     <string>灰记录处理</string>
    </property>
   </widget>
-  <widget class="QLabel" name="QRcodeImageLabel">
+  <widget class="QGraphicsView" name="QRCodeImageGraphics">
    <property name="geometry">
     <rect>
      <x>260</x>
@@ -243,9 +243,6 @@
      <width>250</width>
      <height>250</height>
     </size>
-   </property>
-   <property name="text">
-    <string/>
    </property>
   </widget>
  </widget>

@@ -26,11 +26,61 @@ CardRecharger::CardRecharger(QWidget *parent) :
 	ui->PayWay_Ali->setChecked( true );
 	ui->PayWay_WeiXin->setChecked( false );
 
+	this->QRcodeScene = NULL;
+	this->QRcodeSceneIsEmpty = true;
+	this->qrimage = NULL;
+	pthread_mutex_init( &this->QRImageLocker, NULL );
+	this->TimerID = this->startTimer( 500 );
+	if( this->TimerID == 0 )
+	{
+		qDebug() << QObject::tr( "Start Timer error!" );
+	}
+
 }
 
 CardRecharger::~CardRecharger()
 {
 	delete ui;
+}
+
+void CardRecharger::timerEvent(QTimerEvent *event)
+{
+	pthread_mutex_lock( &this->QRImageLocker );
+
+	if( this->qrimage == NULL )
+	{
+		if( QRcodeSceneIsEmpty == false )
+		{
+			if( this->QRcodeScene != NULL )
+			{
+				delete this->QRcodeScene;
+			}
+			this->QRcodeScene = new QGraphicsScene();
+			ui->QRCodeImageGraphics->setScene( this->QRcodeScene );
+			this->ui->QRCodeImageGraphics->show();
+
+			QRcodeSceneIsEmpty = true;
+		}
+	}
+	else
+	{
+		if( QRcodeSceneIsEmpty == true )
+		{
+			if( this->QRcodeScene != NULL )
+			{
+				delete this->QRcodeScene;
+			}
+			this->QRcodeScene = new QGraphicsScene();
+			ui->QRCodeImageGraphics->setScene( this->QRcodeScene );
+			this->QRcodeScene->addPixmap( QPixmap::fromImage( *( this->qrimage ) ) );
+			this->ui->QRCodeImageGraphics->show();
+
+			QRcodeSceneIsEmpty = false;
+		}
+	}
+
+	pthread_mutex_unlock( &this->QRImageLocker );
+
 }
 
 void CardRecharger::on_Recharge5Button_clicked()
@@ -490,13 +540,24 @@ void CardRecharger::on_PayWay_WeiXin_clicked()
 	RechargerHandling::GetInstance()->PayWay = RechargerHandling::WeiXinPay;
 }
 
-
-void CardRecharger::SetQRLabel(QImage &image)
+void CardRecharger::SetQRView(QImage *image)
 {
-	ui->QRcodeImageLabel->setPixmap(QPixmap::fromImage( image));
+	pthread_mutex_lock( &this->QRImageLocker );
+
+	this->qrimage = image;
+
+	pthread_mutex_unlock( &this->QRImageLocker );
 }
 
-void CardRecharger::on_UpdateButton_clicked()
+
+void CardRecharger::ResetQRView()
 {
-	qDebug() << "button test";
+	pthread_mutex_lock( &this->QRImageLocker );
+
+	delete this->qrimage;
+	this->qrimage = NULL;
+
+	pthread_mutex_unlock( &this->QRImageLocker );
 }
+
+

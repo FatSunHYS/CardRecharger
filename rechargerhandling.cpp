@@ -30,8 +30,6 @@ RechargerHandling::RechargerHandling()
 	pthread_mutex_init( &this->RechargerChargeLocker, NULL );
 	pthread_cond_init( &this->ChargeAction, NULL );
 	pthread_cond_init( &this->RequestQRCode, NULL );
-
-	//connect( this, SIGNAL(UpdateQRImageClick()), CardRecharger::SelfInstance, SLOT(on_UpdateButton_clicked()) );
 }
 
 
@@ -561,14 +559,14 @@ void* RechargerChargeHandler(void *arg)
 		qr = QRcode_encodeString( Handler->QRCodeAddress.toUtf8().data(), 1, QR_ECLEVEL_L, QR_MODE_8, 1 );
 		if( qr != NULL )
 		{
-			qrimage = new QImage( 250, 250, QImage::Format_Mono );
+			qrimage = new QImage( 230, 230, QImage::Format_Mono );
 			qrpainter.begin( qrimage );
 			qrpainter.setBrush( qrbackground );
 			qrpainter.setPen( Qt::NoPen );
-			qrpainter.drawRect( 0, 0, 250, 250 );
-			Handler->DrawQRcodeImage( qr, qrpainter, 250, 250 );
+			qrpainter.drawRect( 0, 0, 230, 230 );
+			Handler->DrawQRcodeImage( qr, qrpainter, 230, 230 );
 			qrpainter.end();
-			qrimage->save( QObject::tr( "./test.jpg" ) );
+			//qrimage->save( QObject::tr( "./test.jpg" ) );
 		}
 		else
 		{
@@ -576,9 +574,11 @@ void* RechargerChargeHandler(void *arg)
 		}
 
 		//CardRecharger::SelfInstance->SetQRLabel( *qrimage );
-
+		CardRecharger::SelfInstance->SetQRView( qrimage );
+		qrimage = NULL;
 
 		sleep( 5 );
+		CardRecharger::SelfInstance->ResetQRView();
 
 		/* Query. */
 
@@ -695,7 +695,7 @@ void RechargerHandling::DrawQRcodeImage( QRcode* qr, QPainter &painter, int widt
 			unsigned char b = qr->data[y * qr_width + x];
 			if(b & 0x01)
 			{
-				QRectF r(x * scale_x, y * scale_y, scale_x, scale_y);
+				QRectF r(x * scale_x + 15, y * scale_y + 15, scale_x, scale_y);
 				painter.drawRects(&r, 1);
 			}
 		}
