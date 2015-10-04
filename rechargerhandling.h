@@ -27,12 +27,17 @@ public:
 	pthread_cond_t LoginCondition;
 	pthread_cond_t HeartPackageCondition;
 	pthread_mutex_t RechargerChargeLocker;
-	pthread_cond_t ChargeAction;
-	pthread_cond_t RequestQRCode;
+	pthread_cond_t ChargeActionCondition;
+	pthread_cond_t RequestQRCodeCondition;
+	pthread_cond_t QueryResultCondition;
+	pthread_cond_t PreRechargeCheckCondition;
+	pthread_cond_t RechargeFinishCondition;
 	int DeviceID;
 	QString DeviceToken;
 	bool DeviceIsLogin;
 	bool IsKeepAlived;
+	bool PreRechargeCheckIsSuccessfully;
+	bool IsRechargeFinish;
 
 	QString PasswordEdition;
 	QString CardPassword;
@@ -52,6 +57,9 @@ public:
 	void ParseLoginMessage( QString& Message );
 	void ParseKeepAlivedMessage( QString& Message );
 	void ParsePrecreateMessage( QString& Message );
+	void ParseQueryMessage( QString& Message );
+	void ParsePreRechargeCheckMessage( QString& Message );
+	void ParseRechargeFinishMessage( QString& Message );
 	void DrawQRcodeImage( QRcode* qr, QPainter &painter, int width, int height );
 	void SendUpdateQRImageSignal();
 

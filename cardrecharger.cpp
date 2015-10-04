@@ -118,8 +118,8 @@ void CardRecharger::on_Recharge5Button_clicked()
 #endif
 
 	{
-		RechargerHandling::GetInstance()->RechargeValue = 5;
-		pthread_cond_signal( &( RechargerHandling::GetInstance()->ChargeAction ) );
+		RechargerHandling::GetInstance()->RechargeValue = 1;
+		pthread_cond_signal( &( RechargerHandling::GetInstance()->ChargeActionCondition ) );
 	}
 	else
 	{
@@ -163,7 +163,7 @@ void CardRecharger::on_Recharge10Button_clicked()
 
 	{
 		RechargerHandling::GetInstance()->RechargeValue = 10;
-		pthread_cond_signal( &( RechargerHandling::GetInstance()->ChargeAction ) );
+		pthread_cond_signal( &( RechargerHandling::GetInstance()->ChargeActionCondition ) );
 	}
 	else
 	{
@@ -207,7 +207,7 @@ void CardRecharger::on_Recharge15Button_clicked()
 
 	{
 		RechargerHandling::GetInstance()->RechargeValue = 15;
-		pthread_cond_signal( &( RechargerHandling::GetInstance()->ChargeAction ) );
+		pthread_cond_signal( &( RechargerHandling::GetInstance()->ChargeActionCondition ) );
 	}
 	else
 	{
@@ -251,7 +251,7 @@ void CardRecharger::on_Recharge20Button_clicked()
 
 	{
 		RechargerHandling::GetInstance()->RechargeValue = 20;
-		pthread_cond_signal( &( RechargerHandling::GetInstance()->ChargeAction ) );
+		pthread_cond_signal( &( RechargerHandling::GetInstance()->ChargeActionCondition ) );
 	}
 	else
 	{
@@ -295,7 +295,7 @@ void CardRecharger::on_Recharge30Button_clicked()
 
 	{
 		RechargerHandling::GetInstance()->RechargeValue = 30;
-		pthread_cond_signal( &( RechargerHandling::GetInstance()->ChargeAction ) );
+		pthread_cond_signal( &( RechargerHandling::GetInstance()->ChargeActionCondition ) );
 	}
 	else
 	{
@@ -339,7 +339,7 @@ void CardRecharger::on_Recharge50Button_clicked()
 
 	{
 		RechargerHandling::GetInstance()->RechargeValue = 50;
-		pthread_cond_signal( &( RechargerHandling::GetInstance()->ChargeAction ) );
+		pthread_cond_signal( &( RechargerHandling::GetInstance()->ChargeActionCondition ) );
 	}
 	else
 	{
@@ -383,7 +383,7 @@ void CardRecharger::on_Recharge80Button_clicked()
 
 	{
 		RechargerHandling::GetInstance()->RechargeValue = 80;
-		pthread_cond_signal( &( RechargerHandling::GetInstance()->ChargeAction ) );
+		pthread_cond_signal( &( RechargerHandling::GetInstance()->ChargeActionCondition ) );
 	}
 	else
 	{
@@ -427,7 +427,7 @@ void CardRecharger::on_Recharge100Button_clicked()
 
 	{
 		RechargerHandling::GetInstance()->RechargeValue = 100;
-		pthread_cond_signal( &( RechargerHandling::GetInstance()->ChargeAction ) );
+		pthread_cond_signal( &( RechargerHandling::GetInstance()->ChargeActionCondition ) );
 	}
 	else
 	{
@@ -471,7 +471,7 @@ void CardRecharger::on_Recharge200Button_clicked()
 
 	{
 		RechargerHandling::GetInstance()->RechargeValue = 200;
-		pthread_cond_signal( &( RechargerHandling::GetInstance()->ChargeAction ) );
+		pthread_cond_signal( &( RechargerHandling::GetInstance()->ChargeActionCondition ) );
 	}
 	else
 	{
@@ -481,9 +481,13 @@ void CardRecharger::on_Recharge200Button_clicked()
 
 void CardRecharger::on_GreyRecordButton_clicked()
 {
-	emit this->AllButtonDisable();
-	QMessageBox::information( this, "a", "grey" );
-	emit this->AllButtonEnable();
+	this->AllButtonDisable();
+#ifdef CHINESE_OUTPUT
+	QMessageBox::information( this, QObject::tr( "支付提醒" ), QObject::tr( "本功能暂未提供！" ), QMessageBox::Ok );
+#else
+	QMessageBox::information( this, QObject::tr( "Pay Infomation." ), QObject::tr( "Not avilable now!"), QMessageBox::Ok );
+#endif
+	this->AllButtonEnable();
 }
 
 

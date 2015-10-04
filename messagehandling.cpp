@@ -114,6 +114,24 @@ void MessageHandling::ParsingRechargerMessages( MessageQueueNode* message )
 			break;
 		}
 
+		case MessageHandling::Query:
+		{
+			RechargerHandling::GetInstance()->ParseQueryMessage( message->MessageContent );
+			break;
+		}
+
+		case MessageHandling::PreRechargeCheck:
+		{
+			RechargerHandling::GetInstance()->ParsePreRechargeCheckMessage( message->MessageContent );
+			break;
+		}
+
+		case MessageHandling::RechargeFinish:
+		{
+			RechargerHandling::GetInstance()->ParseRechargeFinishMessage( message->MessageContent );
+			break;
+		}
+
 		default:
 		{
 			qDebug() << QObject::tr( "MessageAppID Error!" );
