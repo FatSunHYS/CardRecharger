@@ -24,7 +24,7 @@ public:
 						unsigned char* daytime,
 						unsigned char* cardtype,
 						unsigned char* czmm,
-						unsigned char Delayms);
+						unsigned int Delayms);
 	int beep_arm(unsigned char* device, unsigned char time);
 	int writecard( unsigned char* device,
 				   unsigned char keymode,
@@ -36,7 +36,7 @@ public:
 				   unsigned char* daytime,
 				   unsigned char* cardtype,
 				   unsigned char mode,
-				   unsigned char Delayms);
+                   unsigned int Delayms);
 
 
 private:
@@ -60,7 +60,7 @@ private:
 					  unsigned char* sendbuf,
 					  unsigned char* reclen,
 					  unsigned char* recbuf,
-					  unsigned char Delayms);
+					  unsigned int Delayms);
 
 
 };

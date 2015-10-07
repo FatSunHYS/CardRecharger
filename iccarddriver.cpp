@@ -181,7 +181,7 @@ int ICCardDriver::pacarddll_arm(unsigned char* device,
 								unsigned char* sendbuf,
 								unsigned char* reclen,
 								unsigned char* recbuf,
-								unsigned char Delayms)
+								unsigned int Delayms)
 {
 	//DCB dcb; /* windows com properity struct */
 	//COMMTIMEOUTS timeout={0,1,1000,1,1000}; /* windowos com timeout properity */
@@ -194,7 +194,8 @@ int ICCardDriver::pacarddll_arm(unsigned char* device,
 
 	memset(buf, 0, 20);
 	memcpy(com_addr, device, 12);
-	sleep(Delayms);
+	//sleep( 100 );
+	usleep( Delayms );
 
 //begin to set COM properity
 	this->COM_FD = open(com_addr, O_RDWR | O_NOCTTY);
@@ -365,7 +366,7 @@ int ICCardDriver::readb90card_arm(unsigned char* device,	//串口号
 								  unsigned char* daytime,	//日期
 								  unsigned char* cardtype,	//卡类型
 								  unsigned char* czmm,
-								  unsigned char Delayms)	//延时参数
+								  unsigned int Delayms)	//延时参数
 {
 	unsigned char tmpsendbuf[30],tmpreclen,recbuf[30];
 	unsigned char i;
@@ -414,10 +415,12 @@ int ICCardDriver::readb90card_arm(unsigned char* device,	//串口号
 	{
 		return(status);
 	}
+#if 0
 	else
 	{
 		return(recbuf[2]);
 	}
+#endif
 	return 0;
 }
 
@@ -454,7 +457,7 @@ int ICCardDriver::writecard(unsigned char *device,		//串口号
 							unsigned char *daytime,		//日期
 							unsigned char *cardtype,	//卡类型
 							unsigned char mode,			//写卡模式，0：表示第一次发卡；1：表示充值；其他无效
-							unsigned char Delayms)		//延时参数
+                            unsigned int Delayms)		//延时参数
 {
 	unsigned char tmpsendbuf[30],tmpreclen,tmprecbuf[30];
 	unsigned char i;
@@ -501,10 +504,13 @@ int ICCardDriver::writecard(unsigned char *device,		//串口号
 	{
 		return(status);
 	}
+#if 0
 	else
 	{
 		return(tmprecbuf[2]);
 	}
+#endif
+
 	return 0;
 }
 

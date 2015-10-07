@@ -43,8 +43,8 @@ public:
 	QString CardPassword;
 	QString SectionNumber;
 	QString CardNumber;
-	QString CardBalance;
-	QString CardSequenceNumber;
+    double CardBalance;
+    QString CardSequenceNumber;
 	QString QRCodeAddress;
 	QString TradeNumber;
 	QString TradeStatus;
