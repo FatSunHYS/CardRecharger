@@ -40,11 +40,11 @@ public:
 	bool IsRechargeFinish;
 
 	QString PasswordEdition;
-	QString CardPassword;
+    unsigned char CardPassword[ 6 ];
 	QString SectionNumber;
 	QString CardNumber;
     double CardBalance;
-    QString CardSequenceNumber;
+    unsigned int CardSequenceNumber;
 	QString QRCodeAddress;
 	QString TradeNumber;
 	QString TradeStatus;

@@ -243,6 +243,7 @@ void RechargerHandling::ParseLoginMessage(QString &Message)
     char rechargerloginbuffer[ 1024 ];
     QRegExp RegularExpression;
     RegularExpression.setPattern( QObject::tr( "(\\{.*\\})([0-9a-z]{32})"));
+    unsigned char CardMM[ 12 ];
 
     RegularExpression.indexIn( Message );
     QStringList list = RegularExpression.capturedTexts();
@@ -280,7 +281,8 @@ void RechargerHandling::ParseLoginMessage(QString &Message)
     int TemperoryDeviceID = cJSON_GetObjectItem( root, "devId" )->valueint;
     QString TemperoryDeviceToken = QString( cJSON_GetObjectItem( root, "token" )->valuestring );
     QString SecNum = QString( cJSON_GetObjectItem( root, "SECNUM" )->valuestring );
-    QString CardMM = QString( cJSON_GetObjectItem( root, "CARDMM" )->valuestring );
+    memset( CardMM, 0, sizeof( CardMM ) );
+    memcpy( CardMM, cJSON_GetObjectItem( root, "CARDMM" )->valuestring, 12 );
     QString MMEdition = QString( cJSON_GetObjectItem( root, "MMEdtion" )->valuestring );
 
     cJSON_Delete( root );
@@ -318,9 +320,54 @@ void RechargerHandling::ParseLoginMessage(QString &Message)
     this->DeviceID = TemperoryDeviceID;
     this->DeviceToken = TemperoryDeviceToken;
     this->SectionNumber = SecNum;
-    this->CardPassword = CardMM;
     this->PasswordEdition = MMEdition;
+    memset( this->CardPassword, 0, sizeof( this->CardPassword ) );
+
+    for( int i = 0; i < 6; ++i )
+    {
+        if( ( CardMM[ i * 2 ] >= 'a' ) && ( CardMM[ i * 2 ] <= 'f' ) )
+        {
+            this->CardPassword[ i ] = CardMM[ i * 2 ] - 'a' + 0x0A;
+        }
+        else if( ( CardMM[ i * 2 ] >= 'A' ) && ( CardMM[ i * 2 ] <= 'F' ) )
+        {
+            this->CardPassword[ i ] = CardMM[ i * 2 ] - 'A' + 0x0A;
+        }
+        else if( ( CardMM[ i * 2 ] >= '0' ) && ( CardMM[ i * 2 ] <= '9' ) )
+        {
+            this->CardPassword[ i ] = CardMM[ i * 2 ] - '0';
+        }
+        else
+        {
+            qDebug() << QObject::tr( "Parse Card Password failed!" );
+            pthread_cond_signal( &this->LoginCondition );
+            return;
+        }
+
+        this->CardPassword[ i ] <<= 4;
+
+        if( ( CardMM[ i * 2 + 1 ] >= 'a' ) && ( CardMM[ i * 2 + 1 ] <= 'f' ) )
+        {
+            this->CardPassword[ i ] += CardMM[ i * 2 + 1 ] - 'a' + 0x0A;
+        }
+        else if( ( CardMM[ i * 2 + 1 ] >= 'A' ) && ( CardMM[ i * 2 + 1 ] <= 'F' ) )
+        {
+            this->CardPassword[ i ] += CardMM[ i * 2 + 1 ] - 'A' + 0x0A;
+        }
+        else if( ( CardMM[ i * 2 + 1 ] >= '0' ) && ( CardMM[ i * 2 + 1 ] <= '9' ) )
+        {
+            this->CardPassword[ i ] += CardMM[ i * 2 + 1 ] - '0';
+        }
+        else
+        {
+            qDebug() << QObject::tr( "Parse Card Password failed!" );
+            pthread_cond_signal( &this->LoginCondition );
+            return;
+        }
+    }
+
     this->DeviceIsLogin = true;
+
     pthread_cond_signal( &this->LoginCondition );
 }
 
@@ -492,22 +539,22 @@ void* RechargerChargeHandler(void *arg)
         memset( CardDayTimeBuffer, 0, sizeof( CardDayTimeBuffer ) );
         memset( CardTypeBuffer, 0, sizeof( CardTypeBuffer ) );
         memset( CardCzmmBuffer, 0, sizeof( CardCzmmBuffer ) );
-        CardStatus = ICCardHandler->readb90card_arm( ( unsigned char* )( CardRecharger::SelfInstance->DeviceSerials.toUtf8().data() ),
-                                                     ( unsigned char )( *Handler->PasswordEdition.toUtf8().data() ),
-                                                     ( unsigned char )( *Handler->SectionNumber.toUtf8().data() ),
-                                                     ( unsigned char* )( Handler->CardPassword.toUtf8().data() ),
-                                                     CardNumberBuffer,
-                                                     CardBalanceBuffer,
-                                                     CardCompanyPasswordBuffer,
-                                                     CardSynumBuffer,
-                                                     CardDayTimeBuffer,
-                                                     CardTypeBuffer,
-                                                     CardCzmmBuffer,
-                                                     100
-                                                     );
+        CardStatus = ICCardHandler->readwatercard_arm( ( unsigned char* )( CardRecharger::SelfInstance->DeviceSerials.toUtf8().data() ),
+                                                       ( unsigned char )( *Handler->PasswordEdition.toUtf8().data() ),
+                                                       ( unsigned char )( *Handler->SectionNumber.toUtf8().data() ),
+                                                       Handler->CardPassword,
+                                                       CardNumberBuffer,
+                                                       CardBalanceBuffer,
+                                                       CardCompanyPasswordBuffer,
+                                                       CardDayTimeBuffer,
+                                                       CardTypeBuffer,
+                                                       100
+                                                       );
 
         if( CardStatus != 0 )
         {
+            qDebug() << QObject::tr( "CardStatus = " ) << CardStatus;
+
 #ifdef CHINESE_OUTPUT
             CardRecharger::SelfInstance->SetStatusLabel( QObject::tr( "读卡错误，请插好卡片！" ) );
 #else
@@ -516,6 +563,29 @@ void* RechargerChargeHandler(void *arg)
             sleep( 5 );
             continue;
         }
+
+        qDebug() << QObject::tr( "Read Card Information OK!" );
+
+        CardStatus = ICCardHandler->readserialnumber( ( unsigned char* )( CardRecharger::SelfInstance->DeviceSerials.toUtf8().data() ),
+                                                      ( unsigned char )( *Handler->SectionNumber.toUtf8().data() ),
+                                                      Handler->CardPassword,
+                                                      100,
+                                                      Handler->CardSequenceNumber );
+
+        if( CardStatus != 0 )
+        {
+            qDebug() << QObject::tr( "CardStatus = " ) << CardStatus;
+
+#ifdef CHINESE_OUTPUT
+            CardRecharger::SelfInstance->SetStatusLabel( QObject::tr( "读卡错误，请插好卡片！" ) );
+#else
+            CardRecharger::SelfInstance->SetStatusLabel( QObject::tr( "Read Card Sequence Number Error!" ) );
+#endif
+            sleep( 5 );
+            continue;
+        }
+
+        qDebug() << QObject::tr( "Read Card Sequence Number OK!" );
 
         TemperoryIntegerNumber = ( int )CardBalanceBuffer[ 0 ];
         TemperoryIntegerNumber <<= 8;
@@ -537,13 +607,13 @@ void* RechargerChargeHandler(void *arg)
         TemperoryIntegerNumber += ( int )CardNumberBuffer[ 3 ];
 
         Handler->CardNumber = QString::number( TemperoryIntegerNumber );
-        Handler->CardSequenceNumber = Handler->CardNumber;
+        //Handler->CardSequenceNumber = Handler->CardNumber;
 
         qDebug() << QObject::tr( "CardBalance = " ) << Handler->CardBalance;
         qDebug() << QObject::tr( "CardNumber = " ) << Handler->CardNumber;
-        qDebug() << QObject::tr( "CardSequenceNumber = " ) << Handler->CardSequenceNumber;
+        qDebug() << QObject::tr( "CardSequenceNumber = " ) << QString::number( Handler->CardSequenceNumber );
 
-#if 1
+#if 0
 
         TemperoryIntegerNumber = ( 10000 / 100 );
         CardBalanceBuffer[ 3 ] = ( unsigned char )( TemperoryIntegerNumber & 0x000000FF );
@@ -564,9 +634,12 @@ void* RechargerChargeHandler(void *arg)
                                   );
 
         qDebug() << QObject::tr( "Rewrite done." );
+
+#endif
+
+#if 1
         sleep( 5 );
         continue;
-
 #endif
 
         /* Precreate. */
@@ -841,7 +914,7 @@ void* RechargerChargeHandler(void *arg)
         CardStatus = ICCardHandler->writecard( ( unsigned char* )( CardRecharger::SelfInstance->DeviceSerials.toUtf8().data() ),
                                                ( unsigned char )( *Handler->PasswordEdition.toUtf8().data() ),
                                                ( unsigned char )( *Handler->SectionNumber.toUtf8().data() ),
-                                               ( unsigned char* )( Handler->CardPassword.toUtf8().data() ),
+                                               Handler->CardPassword,
                                                CardNumberBuffer,
                                                CardBalanceBuffer,
                                                CardCompanyPasswordBuffer,
@@ -911,7 +984,7 @@ void* RechargerChargeHandler(void *arg)
             ICCardHandler->writecard( ( unsigned char* )( CardRecharger::SelfInstance->DeviceSerials.toUtf8().data() ),
                                       ( unsigned char )( *Handler->PasswordEdition.toUtf8().data() ),
                                       ( unsigned char )( *Handler->SectionNumber.toUtf8().data() ),
-                                      ( unsigned char* )( Handler->CardPassword.toUtf8().data() ),
+                                      Handler->CardPassword,
                                       CardNumberBuffer,
                                       CardBalanceBuffer,
                                       CardCompanyPasswordBuffer,
@@ -953,7 +1026,7 @@ void* RechargerChargeHandler(void *arg)
             ICCardHandler->writecard( ( unsigned char* )( CardRecharger::SelfInstance->DeviceSerials.toUtf8().data() ),
                                       ( unsigned char )( *Handler->PasswordEdition.toUtf8().data() ),
                                       ( unsigned char )( *Handler->SectionNumber.toUtf8().data() ),
-                                      ( unsigned char* )( Handler->CardPassword.toUtf8().data() ),
+                                     Handler->CardPassword,
                                       CardNumberBuffer,
                                       CardBalanceBuffer,
                                       CardCompanyPasswordBuffer,
