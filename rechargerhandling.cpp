@@ -938,10 +938,12 @@ void* RechargerChargeHandler(void *arg)
                                   100
                                   );
 
+        Handler->CardBalance += Handler->RechargeValue;
+
         //qDebug() << QObject::tr( "Rewrite done." );
 
         qDebug() << QObject::tr( "CardStatus = " ) << CardStatus;
-        sleep( 5 );
+        //sleep( 5 );
 
         /* RechargeFinish. */
         Handler->IsRechargeFinish = false;
@@ -1058,9 +1060,9 @@ void* RechargerChargeHandler(void *arg)
         else
         {
 #ifdef CHINESE_OUTPUT
-            CardRecharger::SelfInstance->SetStatusLabel( QObject::tr( "交易成功！" ) );
+            CardRecharger::SelfInstance->SetStatusLabel( QObject::tr( "交易成功!剩余余额为:" ) + QString::number( Handler->CardBalance, '.', 0 ) + QObject::tr( "元" )  );
 #else
-            CardRecharger::SelfInstance->SetStatusLabel( QObject::tr( "RechargeFinish Successfully!" ) );
+            CardRecharger::SelfInstance->SetStatusLabel( QObject::tr( "RechargeFinish Successfully! Balance = " ) + QString::number( Handler->CardBalance, '.', 0 ) );
 #endif
         }
 
