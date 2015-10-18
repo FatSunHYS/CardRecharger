@@ -39,10 +39,10 @@ public:
 	bool PreRechargeCheckIsSuccessfully;
 	bool IsRechargeFinish;
 
-	QString PasswordEdition;
+    unsigned char PasswordEdition;
     unsigned char CardPassword[ 6 ];
-	QString SectionNumber;
-	QString CardNumber;
+    unsigned char SectionNumber;
+    int CardNumber;
     double CardBalance;
     unsigned int CardSequenceNumber;
 	QString QRCodeAddress;

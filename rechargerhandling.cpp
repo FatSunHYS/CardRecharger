@@ -244,6 +244,8 @@ void RechargerHandling::ParseLoginMessage(QString &Message)
     QRegExp RegularExpression;
     RegularExpression.setPattern( QObject::tr( "(\\{.*\\})([0-9a-z]{32})"));
     unsigned char CardMM[ 12 ];
+    int TemperoryIntegerNumber;
+    bool TransferIsOK;
 
     RegularExpression.indexIn( Message );
     QStringList list = RegularExpression.capturedTexts();
@@ -287,7 +289,6 @@ void RechargerHandling::ParseLoginMessage(QString &Message)
 
     cJSON_Delete( root );
 
-
     /* Checkout the MD5 */
     if( Message_MD5 == QString( "" ) )
     {
@@ -316,11 +317,27 @@ void RechargerHandling::ParseLoginMessage(QString &Message)
         return;
     }
 
+    TemperoryIntegerNumber = SecNum.toInt( &TransferIsOK );
+    if( TransferIsOK == false || TemperoryIntegerNumber >= 255 || TemperoryIntegerNumber < 0 )
+    {
+        qDebug() << QObject::tr( "Transfer Section Number is error! - SecNum = " ) << SecNum;
+        pthread_cond_signal( &this->LoginCondition );
+        return;
+    }
+    this->SectionNumber = ( unsigned char )( TemperoryIntegerNumber & 0xFF );
+
+    TemperoryIntegerNumber = MMEdition.toInt( &TransferIsOK );
+    if( TransferIsOK == false || TemperoryIntegerNumber >= 255 || TemperoryIntegerNumber < 0 )
+    {
+        qDebug() << QObject::tr( "Transfer Passward Edition is error! - MMEdition = " ) << MMEdition;
+        pthread_cond_signal( &this->LoginCondition );
+        return;
+    }
+    this->PasswordEdition = ( unsigned char )( TemperoryIntegerNumber & 0xFF );
+
 
     this->DeviceID = TemperoryDeviceID;
     this->DeviceToken = TemperoryDeviceToken;
-    this->SectionNumber = SecNum;
-    this->PasswordEdition = MMEdition;
     memset( this->CardPassword, 0, sizeof( this->CardPassword ) );
 
     for( int i = 0; i < 6; ++i )
@@ -540,8 +557,8 @@ void* RechargerChargeHandler(void *arg)
         memset( CardTypeBuffer, 0, sizeof( CardTypeBuffer ) );
         memset( CardCzmmBuffer, 0, sizeof( CardCzmmBuffer ) );
         CardStatus = ICCardHandler->readwatercard_arm( ( unsigned char* )( CardRecharger::SelfInstance->DeviceSerials.toUtf8().data() ),
-                                                       ( unsigned char )( *Handler->PasswordEdition.toUtf8().data() ),
-                                                       ( unsigned char )( *Handler->SectionNumber.toUtf8().data() ),
+                                                       Handler->PasswordEdition,
+                                                       Handler->SectionNumber,
                                                        Handler->CardPassword,
                                                        CardNumberBuffer,
                                                        CardBalanceBuffer,
@@ -567,7 +584,7 @@ void* RechargerChargeHandler(void *arg)
         qDebug() << QObject::tr( "Read Card Information OK!" );
 
         CardStatus = ICCardHandler->readserialnumber( ( unsigned char* )( CardRecharger::SelfInstance->DeviceSerials.toUtf8().data() ),
-                                                      ( unsigned char )( *Handler->SectionNumber.toUtf8().data() ),
+                                                      Handler->SectionNumber,
                                                       Handler->CardPassword,
                                                       100,
                                                       Handler->CardSequenceNumber );
@@ -606,24 +623,23 @@ void* RechargerChargeHandler(void *arg)
         TemperoryIntegerNumber <<= 8;
         TemperoryIntegerNumber += ( int )CardNumberBuffer[ 3 ];
 
-        Handler->CardNumber = QString::number( TemperoryIntegerNumber );
-        //Handler->CardSequenceNumber = Handler->CardNumber;
+        Handler->CardNumber = TemperoryIntegerNumber;
 
         qDebug() << QObject::tr( "CardBalance = " ) << Handler->CardBalance;
-        qDebug() << QObject::tr( "CardNumber = " ) << Handler->CardNumber;
+        qDebug() << QObject::tr( "CardNumber = " ) << QString::number( Handler->CardNumber );
         qDebug() << QObject::tr( "CardSequenceNumber = " ) << QString::number( Handler->CardSequenceNumber );
 
 #if 0
 
-        TemperoryIntegerNumber = ( 10000 / 100 );
+        TemperoryIntegerNumber = Handler->RechargeValue * 100;
         CardBalanceBuffer[ 3 ] = ( unsigned char )( TemperoryIntegerNumber & 0x000000FF );
         CardBalanceBuffer[ 2 ] = ( unsigned char )( ( TemperoryIntegerNumber & 0x0000FF00 ) >> 8 );
         CardBalanceBuffer[ 1 ] = ( unsigned char )( ( TemperoryIntegerNumber & 0x00FF0000 ) >> 16 );
         CardBalanceBuffer[ 0 ] = ( unsigned char )( ( TemperoryIntegerNumber & 0xFF000000 ) >> 24 );
         ICCardHandler->writecard( ( unsigned char* )( CardRecharger::SelfInstance->DeviceSerials.toUtf8().data() ),
-                                  ( unsigned char )( *Handler->PasswordEdition.toUtf8().data() ),
-                                  ( unsigned char )( *Handler->SectionNumber.toUtf8().data() ),
-                                  ( unsigned char* )( Handler->CardPassword.toUtf8().data() ),
+                                  Handler->PasswordEdition,
+                                  Handler->SectionNumber,
+                                  Handler->CardPassword,
                                   CardNumberBuffer,
                                   CardBalanceBuffer,
                                   CardCompanyPasswordBuffer,
@@ -637,7 +653,7 @@ void* RechargerChargeHandler(void *arg)
 
 #endif
 
-#if 1
+#if 0
         sleep( 5 );
         continue;
 #endif
@@ -646,8 +662,8 @@ void* RechargerChargeHandler(void *arg)
         CurrentTimestampString = QString::number( TimestampHandling::GetInstance()->GetTimestamp(), '.', 0 );
 
         RequestParameters = QObject::tr( "amount=" ) + QString::number( Handler->RechargeValue );
-        RequestParameters += QObject::tr( "&cardNum=" ) + Handler->CardNumber;
-        RequestParameters += ( QObject::tr( "&devId=" ) + QString::number( Handler->DeviceID, 10 ) );
+        RequestParameters += QObject::tr( "&cardNum=" ) + QString::number( Handler->CardNumber );
+        RequestParameters += ( QObject::tr( "&devId=" ) + QString::number( Handler->DeviceID ) );
         RequestParameters += QObject::tr( "&devIdentify=" ) + CardRecharger::SelfInstance->CardRechargerClientID;
         if( Handler->PayWay == RechargerHandling::AliPay )
         {
@@ -657,7 +673,7 @@ void* RechargerChargeHandler(void *arg)
         {
             RequestParameters += QObject::tr( "&payWay=weixin" );
         }
-        RequestParameters += QObject::tr( "&sequenceNum=" ) + Handler->CardSequenceNumber;
+        RequestParameters += QObject::tr( "&sequenceNum=" ) + QString::number( Handler->CardSequenceNumber );
         RequestParameters += ( QObject::tr( "&timestamp=" ) + CurrentTimestampString );
         RequestParameters += ( QObject::tr( "&token=" ) + Handler->DeviceToken );
 
@@ -841,10 +857,10 @@ void* RechargerChargeHandler(void *arg)
         CurrentTimestampString = QString::number( TimestampHandling::GetInstance()->GetTimestamp(), '.', 0 );
 
         RequestParameters = ( QObject::tr( "balance=" ) + QString::number( Handler->CardBalance, '.', 0 ) );
-        RequestParameters += ( QObject::tr( "&cardNum=" ) + Handler->CardNumber );
+        RequestParameters += ( QObject::tr( "&cardNum=" ) + QString::number( Handler->CardNumber ) );
         RequestParameters += ( QObject::tr( "&devId=" ) + QString::number( Handler->DeviceID, 10 ) );
         RequestParameters += ( QObject::tr( "&out_trade_no=" ) + Handler->TradeNumber );
-        RequestParameters += ( QObject::tr( "&sequenceNum=" ) + Handler->CardSequenceNumber );
+        RequestParameters += ( QObject::tr( "&sequenceNum=" ) + QString::number( Handler->CardSequenceNumber ) );
         RequestParameters += ( QObject::tr( "&timestamp=" ) + CurrentTimestampString );
         RequestParameters += ( QObject::tr( "&token=" ) + Handler->DeviceToken );
         RequestParameters += ( QObject::tr( "&total_amount=" ) + QString::number( Handler->RechargeValue ) );
@@ -904,25 +920,25 @@ void* RechargerChargeHandler(void *arg)
         CardRecharger::SelfInstance->SetStatusLabel( QObject::tr( "Writing card!" ) );
 #endif
 
-        Handler->CardBalance += ( double )Handler->RechargeValue;
-        TemperoryIntegerNumber = ( int )( Handler->CardBalance * 100 );
-        CardNumberBuffer[ 3 ] = ( unsigned char )( TemperoryIntegerNumber & 0x000000FF );
-        CardNumberBuffer[ 2 ] = ( unsigned char )( ( TemperoryIntegerNumber & 0x0000FF00 ) >> 8 );
-        CardNumberBuffer[ 1 ] = ( unsigned char )( ( TemperoryIntegerNumber & 0x00FF0000 ) >> 16 );
-        CardNumberBuffer[ 0 ] = ( unsigned char )( ( TemperoryIntegerNumber & 0xFF000000 ) >> 24 );
+        TemperoryIntegerNumber = Handler->RechargeValue * 100;
+        CardBalanceBuffer[ 3 ] = ( unsigned char )( TemperoryIntegerNumber & 0x000000FF );
+        CardBalanceBuffer[ 2 ] = ( unsigned char )( ( TemperoryIntegerNumber & 0x0000FF00 ) >> 8 );
+        CardBalanceBuffer[ 1 ] = ( unsigned char )( ( TemperoryIntegerNumber & 0x00FF0000 ) >> 16 );
+        CardBalanceBuffer[ 0 ] = ( unsigned char )( ( TemperoryIntegerNumber & 0xFF000000 ) >> 24 );
+        ICCardHandler->writecard( ( unsigned char* )( CardRecharger::SelfInstance->DeviceSerials.toUtf8().data() ),
+                                  Handler->PasswordEdition,
+                                  Handler->SectionNumber,
+                                  Handler->CardPassword,
+                                  CardNumberBuffer,
+                                  CardBalanceBuffer,
+                                  CardCompanyPasswordBuffer,
+                                  CardDayTimeBuffer,
+                                  CardTypeBuffer,
+                                  1,
+                                  100
+                                  );
 
-        CardStatus = ICCardHandler->writecard( ( unsigned char* )( CardRecharger::SelfInstance->DeviceSerials.toUtf8().data() ),
-                                               ( unsigned char )( *Handler->PasswordEdition.toUtf8().data() ),
-                                               ( unsigned char )( *Handler->SectionNumber.toUtf8().data() ),
-                                               Handler->CardPassword,
-                                               CardNumberBuffer,
-                                               CardBalanceBuffer,
-                                               CardCompanyPasswordBuffer,
-                                               CardDayTimeBuffer,
-                                               CardTypeBuffer,
-                                               1,
-                                               100
-                                               );
+        //qDebug() << QObject::tr( "Rewrite done." );
 
         qDebug() << QObject::tr( "CardStatus = " ) << CardStatus;
         sleep( 5 );
@@ -932,7 +948,7 @@ void* RechargerChargeHandler(void *arg)
         CurrentTimestampString = QString::number( TimestampHandling::GetInstance()->GetTimestamp(), '.', 0 );
 
         RequestParameters = ( QObject::tr( "balance=" ) + QString::number( Handler->CardBalance, '.', 0 ) );
-        RequestParameters += ( QObject::tr( "&cardNum=" ) + Handler->CardNumber );
+        RequestParameters += ( QObject::tr( "&cardNum=" ) + QString::number( Handler->CardNumber ) );
         RequestParameters += ( QObject::tr( "&devId=" ) + QString::number( Handler->DeviceID, 10 ) );
         RequestParameters += ( QObject::tr( "&out_trade_no=" ) + Handler->TradeNumber );
         if( CardStatus == 0 )
@@ -943,7 +959,7 @@ void* RechargerChargeHandler(void *arg)
         {
             RequestParameters += ( QObject::tr( "&recharge_status=" ) + QObject::tr( "FAIL" ) );
         }
-        RequestParameters += ( QObject::tr( "&sequenceNum=" ) + Handler->CardSequenceNumber );
+        RequestParameters += ( QObject::tr( "&sequenceNum=" ) + QString::number( Handler->CardSequenceNumber ) );
         RequestParameters += ( QObject::tr( "&timestamp=" ) + CurrentTimestampString );
         RequestParameters += ( QObject::tr( "&token=" ) + Handler->DeviceToken );
         RequestParameters += ( QObject::tr( "&total_amount=" ) + QString::number( Handler->RechargeValue ) );
@@ -975,24 +991,24 @@ void* RechargerChargeHandler(void *arg)
 #endif
 
             /* ReWrite the card. */
-            Handler->CardBalance -= ( double )Handler->RechargeValue;
-            TemperoryIntegerNumber = ( int )( Handler->CardBalance * 100 );
-            CardNumberBuffer[ 3 ] = ( unsigned char )( TemperoryIntegerNumber & 0x000000FF );
-            CardNumberBuffer[ 2 ] = ( unsigned char )( ( TemperoryIntegerNumber & 0x0000FF00 ) >> 8 );
-            CardNumberBuffer[ 1 ] = ( unsigned char )( ( TemperoryIntegerNumber & 0x00FF0000 ) >> 16 );
-            CardNumberBuffer[ 0 ] = ( unsigned char )( ( TemperoryIntegerNumber & 0xFF000000 ) >> 24 );
-            ICCardHandler->writecard( ( unsigned char* )( CardRecharger::SelfInstance->DeviceSerials.toUtf8().data() ),
-                                      ( unsigned char )( *Handler->PasswordEdition.toUtf8().data() ),
-                                      ( unsigned char )( *Handler->SectionNumber.toUtf8().data() ),
-                                      Handler->CardPassword,
-                                      CardNumberBuffer,
-                                      CardBalanceBuffer,
-                                      CardCompanyPasswordBuffer,
-                                      CardDayTimeBuffer,
-                                      CardTypeBuffer,
-                                      1,
-                                      100
-                                      );
+//            Handler->CardBalance -= ( double )Handler->RechargeValue;
+//            TemperoryIntegerNumber = ( int )( Handler->CardBalance * 100 );
+//            CardNumberBuffer[ 3 ] = ( unsigned char )( TemperoryIntegerNumber & 0x000000FF );
+//            CardNumberBuffer[ 2 ] = ( unsigned char )( ( TemperoryIntegerNumber & 0x0000FF00 ) >> 8 );
+//            CardNumberBuffer[ 1 ] = ( unsigned char )( ( TemperoryIntegerNumber & 0x00FF0000 ) >> 16 );
+//            CardNumberBuffer[ 0 ] = ( unsigned char )( ( TemperoryIntegerNumber & 0xFF000000 ) >> 24 );
+//            ICCardHandler->writecard( ( unsigned char* )( CardRecharger::SelfInstance->DeviceSerials.toUtf8().data() ),
+//                                      Handler->PasswordEdition,
+//                                      Handler->SectionNumber,
+//                                      Handler->CardPassword,
+//                                      CardNumberBuffer,
+//                                      CardBalanceBuffer,
+//                                      CardCompanyPasswordBuffer,
+//                                      CardDayTimeBuffer,
+//                                      CardTypeBuffer,
+//                                      1,
+//                                      100
+//                                      );
 
             sleep( 5 );
             break;
@@ -1017,24 +1033,24 @@ void* RechargerChargeHandler(void *arg)
 
             /* ReWrite the card. */
 
-            Handler->CardBalance -= ( double )Handler->RechargeValue;
-            TemperoryIntegerNumber = ( int )( Handler->CardBalance * 100 );
-            CardNumberBuffer[ 3 ] = ( unsigned char )( TemperoryIntegerNumber & 0x000000FF );
-            CardNumberBuffer[ 2 ] = ( unsigned char )( ( TemperoryIntegerNumber & 0x0000FF00 ) >> 8 );
-            CardNumberBuffer[ 1 ] = ( unsigned char )( ( TemperoryIntegerNumber & 0x00FF0000 ) >> 16 );
-            CardNumberBuffer[ 0 ] = ( unsigned char )( ( TemperoryIntegerNumber & 0xFF000000 ) >> 24 );
-            ICCardHandler->writecard( ( unsigned char* )( CardRecharger::SelfInstance->DeviceSerials.toUtf8().data() ),
-                                      ( unsigned char )( *Handler->PasswordEdition.toUtf8().data() ),
-                                      ( unsigned char )( *Handler->SectionNumber.toUtf8().data() ),
-                                     Handler->CardPassword,
-                                      CardNumberBuffer,
-                                      CardBalanceBuffer,
-                                      CardCompanyPasswordBuffer,
-                                      CardDayTimeBuffer,
-                                      CardTypeBuffer,
-                                      1,
-                                      100
-                                      );
+//            Handler->CardBalance -= ( double )Handler->RechargeValue;
+//            TemperoryIntegerNumber = ( int )( Handler->CardBalance * 100 );
+//            CardNumberBuffer[ 3 ] = ( unsigned char )( TemperoryIntegerNumber & 0x000000FF );
+//            CardNumberBuffer[ 2 ] = ( unsigned char )( ( TemperoryIntegerNumber & 0x0000FF00 ) >> 8 );
+//            CardNumberBuffer[ 1 ] = ( unsigned char )( ( TemperoryIntegerNumber & 0x00FF0000 ) >> 16 );
+//            CardNumberBuffer[ 0 ] = ( unsigned char )( ( TemperoryIntegerNumber & 0xFF000000 ) >> 24 );
+//            ICCardHandler->writecard( ( unsigned char* )( CardRecharger::SelfInstance->DeviceSerials.toUtf8().data() ),
+//                                      Handler->PasswordEdition,
+//                                      Handler->SectionNumber,
+//                                      Handler->CardPassword,
+//                                      CardNumberBuffer,
+//                                      CardBalanceBuffer,
+//                                      CardCompanyPasswordBuffer,
+//                                      CardDayTimeBuffer,
+//                                      CardTypeBuffer,
+//                                      1,
+//                                      100
+//                                      );
 
             sleep( 5 );
             continue;
