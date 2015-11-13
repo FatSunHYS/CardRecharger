@@ -40,6 +40,12 @@ public:
                          unsigned char *CARDPassword,
                          unsigned int Delayms,
                          unsigned int &serialnum);
+    int readconsumptionrecord(unsigned char *comdevice,
+                              unsigned char secnum,
+                              unsigned char *CARDPassword,
+                              unsigned int Delayms,
+                              unsigned int &record);
+
 
 
 private:

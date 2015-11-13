@@ -1,0 +1,12 @@
+安装方法：
+
+1. 将本文件夹复制到sd卡中。
+
+2. 将sd卡插入到Tiny4412开发板上。
+
+3. 通过串口进入系统，输入以下命令：
+sh /sdcard/CardRechargerInstall/install.sh
+
+4. 重启开发板。
+
+
