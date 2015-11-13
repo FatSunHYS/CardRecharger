@@ -16,18 +16,36 @@ SOURCES += main.cpp\
         cardrecharger.cpp \
     iccarddriver.cpp \
     inifile.c \
-    httpclient.cpp
+    httpclient.cpp \
+    messagequeue.cpp \
+    messagequeuenode.cpp \
+    messagehandling.cpp \
+    rechargerhandling.cpp \
+    timestamphandling.cpp \
+    cJSON.c \
+    errordialog.cpp
 
 HEADERS  += cardrecharger.h \
     iccarddriver.h \
     inifile.h \
     httpclient.h \
-    globalparameter.h \
-    sqlite3.h
+    messagequeue.h \
+    messagequeuenode.h \
+    messagehandling.h \
+    rechargerhandling.h \
+    timestamphandling.h \
+    cJSON.h \
+    errordialog.h
 
-FORMS    += cardrecharger.ui
+FORMS    += cardrecharger.ui \
+    errordialog.ui
 
 
 LIBS += -lpthread
+LIBS += -lcurl
+LIBS += -lqrencode
 
-#DEFINES += EMBEDDED_BOARD
+DEFINES += CURL_STATICLIB
+
+DEFINES += EMBEDDED_BOARD
+DEFINES += CHINESE_OUTPUT

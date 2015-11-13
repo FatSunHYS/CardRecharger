@@ -1,7 +1,6 @@
 #ifndef ICCARDDRIVER_H
 #define ICCARDDRIVER_H
 
-
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -10,46 +9,38 @@
 #include <string.h>
 #include "cardrecharger.h"
 
-#include <QObject>
 
-class ICCardDriver : public QObject
+class ICCardDriver
 {
-	Q_OBJECT
 public:
-	static ICCardDriver* GetICCardDirverInstance();
-	int set_speed( int speed );
-	int set_parity( int databits, int stopbits, int parity );
-	int set_timeout();
-	int pacarddll_arm(unsigned char* device,
-					  unsigned char sendlen,
-					  unsigned char* sendbuf,
-					  unsigned char* reclen,
-					  unsigned char* recbuf,
-					  unsigned char Delayms);
-	int readb90card_arm(unsigned char* device,
-						unsigned char keymode,
-						unsigned char secnum,
-						unsigned char* key,
-						unsigned char* kh,
-						unsigned char* balance,
-						unsigned char* dwmm,
-						unsigned char* synum,
-						unsigned char* daytime,
-						unsigned char* cardtype,
-						unsigned char* czmm,
-						unsigned char Delayms);
-	int beep_arm(unsigned char* device, unsigned char time);
-	int writecard( unsigned char* device,
-				   unsigned char keymode,
-				   unsigned char secnum,
-				   unsigned char* key,
-				   unsigned char* kh,
-				   unsigned char* balance,
-				   unsigned char* dwmm,
-				   unsigned char* daytime,
-				   unsigned char* cardtype,
-				   unsigned char mode,
-				   unsigned char Delayms);
+    static ICCardDriver* GetICCardDirverInstance();
+    int readwatercard_arm(unsigned char *device,
+                          unsigned char keymode,
+                          unsigned char secnum,
+                          unsigned char *key,
+                          unsigned char *kh,
+                          unsigned char *balance,
+                          unsigned char *dwmm,
+                          unsigned char *daytime,
+                          unsigned char *cardtype,
+                          unsigned int Delayms);
+    int beep_arm(unsigned char* device, unsigned char time);
+    int writecard( unsigned char* device,
+                   unsigned char keymode,
+                   unsigned char secnum,
+                   unsigned char* key,
+                   unsigned char* kh,
+                   unsigned char* balance,
+                   unsigned char* dwmm,
+                   unsigned char* daytime,
+                   unsigned char* cardtype,
+                   unsigned char mode,
+                   unsigned int Delayms);
+    int readserialnumber(unsigned char *comdevice,
+                         unsigned char secnum,
+                         unsigned char *CARDPassword,
+                         unsigned int Delayms,
+                         unsigned int &serialnum);
 
     int init_dev();
     int Open(CardRecharger* P_CardRe,
@@ -60,30 +51,28 @@ public:
              unsigned char type);
 private:
 
-	static const int speed_arr[ 16 ];
-	static const int name_arr[ 16 ];
-	static ICCardDriver* PrivateICCardDriverInstance;
+    static const int speed_arr[ 16 ];
+    static const int name_arr[ 16 ];
+    static ICCardDriver* PrivateICCardDriverInstance;
 
-	int COM_FD;
-	fd_set fds;
-	struct timeval tv;
+    int COM_FD;
+    fd_set fds;
+    struct timeval tv;
 
-    int speed;
-    char Serila_Dev[100];
-    unsigned char m_CardSecurityCode[6];
-    unsigned char m_CardSecurityMode;
-    unsigned char m_CardSectorNum;
-    unsigned char m_Cardtype;
-    CardRecharger* m_CardRcharger;
-    static void *SerialDevWRThreadFunc(void * lparam);
-public:
+    ICCardDriver();
+    ~ICCardDriver();
 
-	explicit ICCardDriver(QObject *parent = 0);
-	~ICCardDriver();
+    int set_speed( int speed );
+    int set_parity( int databits, int stopbits, int parity );
+    int set_timeout();
+    int pacarddll_arm(unsigned char* device,
+                      unsigned char sendlen,
+                      unsigned char* sendbuf,
+                      unsigned char* reclen,
+                      unsigned char* recbuf,
+                      unsigned int Delayms);
 
-signals:
 
-public slots:
 };
 
 

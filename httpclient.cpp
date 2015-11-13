@@ -1,24 +1,89 @@
+#include <QObject>
+#include <QDebug>
+
 #include "httpclient.h"
 
 
-HttpClient* HttpClient::PrivateInstance = NULL;
 
-
-HttpClient* HttpClient::GetHttpClientInstance()
+CURLcode HttpClient::RequestGet( QUrl& url, QString& RespondContent )
 {
-	if( HttpClient::PrivateInstance == NULL )
+	CURLcode requestresult;
+	std::string TemperoryContent;
+
+	this->HttpFD = curl_easy_init();
+
+	if( this->HttpFD == NULL )
 	{
-		HttpClient::PrivateInstance = new HttpClient();
+		curl_easy_cleanup( this->HttpFD );
+		this->HttpFD = NULL;
+		return CURLE_FAILED_INIT;
 	}
 
-	return HttpClient::PrivateInstance;
+	curl_easy_setopt( this->HttpFD, CURLOPT_URL, url.toString().toUtf8().data() );
+	curl_easy_setopt( this->HttpFD, CURLOPT_NOSIGNAL, 1 );
+	curl_easy_setopt( this->HttpFD, CURLOPT_WRITEFUNCTION, HttpClientContentReceived );
+	curl_easy_setopt( this->HttpFD, CURLOPT_WRITEDATA, ( void* )&TemperoryContent );
+	curl_easy_setopt( this->HttpFD, CURLOPT_CONNECTTIMEOUT, 3);
+	curl_easy_setopt( this->HttpFD, CURLOPT_TIMEOUT, 3);
+	requestresult = curl_easy_perform( this->HttpFD );
+	curl_easy_cleanup( this->HttpFD );
+	this->HttpFD = NULL;
+
+	RespondContent = QString::fromStdString( TemperoryContent );
+
+	return requestresult;
 }
 
 
-HttpClient::HttpClient(QObject *parent) : QObject(parent)
+CURLcode HttpClient::RequestPost( QUrl& url, QString& Postdata, QString& RespondContent )
+{
+
+	CURLcode requestresult;
+	std::string TemperoryContent;
+
+	this->HttpFD = curl_easy_init();
+
+	if( this->HttpFD == NULL )
+	{
+		curl_easy_cleanup( this->HttpFD );
+		this->HttpFD = NULL;
+		return CURLE_FAILED_INIT;
+	}
+
+	curl_easy_setopt( this->HttpFD, CURLOPT_URL, url.toString().toUtf8().data() );
+	curl_easy_setopt( this->HttpFD, CURLOPT_NOSIGNAL, 1 );
+	curl_easy_setopt( this->HttpFD, CURLOPT_POSTFIELDS, Postdata.toUtf8().data() );
+	curl_easy_setopt( this->HttpFD, CURLOPT_WRITEFUNCTION, HttpClientContentReceived );
+	curl_easy_setopt( this->HttpFD, CURLOPT_WRITEDATA, ( void* )&TemperoryContent );
+	curl_easy_setopt( this->HttpFD, CURLOPT_CONNECTTIMEOUT, 3);
+	curl_easy_setopt( this->HttpFD, CURLOPT_TIMEOUT, 3);
+	curl_easy_setopt( this->HttpFD, CURLOPT_POST, 1);
+	requestresult = curl_easy_perform( this->HttpFD );
+	curl_easy_cleanup( this->HttpFD );
+	this->HttpFD = NULL;
+
+	RespondContent = QString::fromStdString( TemperoryContent );
+
+	return requestresult;
+}
+
+
+
+HttpClient::HttpClient()
 {
 	this->HttpFD = NULL;
-	this->RequestId = -1;
-
 }
 
+size_t HttpClientContentReceived( void *ptr, size_t size, size_t nmemb, void *stream )
+{
+	std::string* destinationpointer = dynamic_cast< std::string* >( ( std::string* )stream );
+	if( NULL == destinationpointer || NULL == ptr )
+	{
+	return -1;
+	}
+
+	char* sourcepointer = (char*)ptr;
+	destinationpointer->append( sourcepointer, size * nmemb);
+
+	return nmemb;
+}

@@ -1,27 +1,27 @@
 #ifndef HTTPCLIENT_H
 #define HTTPCLIENT_H
 
-#include <QObject>
+#include <QString>
 #include <QUrl>
-#include <QHttp>
 
-class HttpClient : public QObject
+#include <curl/curl.h>
+#include <iostream>
+using namespace std;
+
+class HttpClient
 {
-	Q_OBJECT
 public:
-	static HttpClient* GetHttpClientInstance();
 
-signals:
-
-public slots:
+	HttpClient();
+	CURLcode RequestGet( QUrl& url, QString& RespondContent );
+	CURLcode RequestPost( QUrl& url, QString& Postdata, QString& RespondContent );
 
 private:
-	static HttpClient* PrivateInstance;
-	QHttp* HttpFD;
-	int RequestId;
 
-public:
-	explicit HttpClient(QObject *parent = 0);
+	CURL* HttpFD;
+
 };
+
+size_t HttpClientContentReceived( void *ptr, size_t size, size_t nmemb, void *stream );
 
 #endif // HTTPCLIENT_H
