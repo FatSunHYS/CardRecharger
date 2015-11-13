@@ -86,7 +86,7 @@ void* TimestampHandler( void* arg )
 		if( Handler->GetTimestampRefreshState() == false )
 		{
 #ifdef CHINESE_OUTPUT
-			CardRecharger::SelfInstance->SetStatusLabel( tr( "网络断开，请检查网络！"));
+            CardRecharger::SelfInstance->SetStatusLabel( QObject::tr( "网络断开，请检查网络！"));
 #else
 			CardRecharger::SelfInstance->SetStatusLabel( QObject::tr( "Please reconnect the network!"));
 #endif

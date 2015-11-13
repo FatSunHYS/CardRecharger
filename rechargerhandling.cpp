@@ -856,7 +856,7 @@ void* RechargerChargeHandler(void *arg)
         Handler->PreRechargeCheckIsSuccessfully = false;
         CurrentTimestampString = QString::number( TimestampHandling::GetInstance()->GetTimestamp(), '.', 0 );
 
-        RequestParameters = ( QObject::tr( "balance=" ) + QString::number( Handler->CardBalance, '.', 0 ) );
+        RequestParameters = ( QObject::tr( "balance=" ) + QString::number( Handler->CardBalance, 'g', 2 ) );
         RequestParameters += ( QObject::tr( "&cardNum=" ) + QString::number( Handler->CardNumber ) );
         RequestParameters += ( QObject::tr( "&devId=" ) + QString::number( Handler->DeviceID, 10 ) );
         RequestParameters += ( QObject::tr( "&out_trade_no=" ) + Handler->TradeNumber );
@@ -949,7 +949,7 @@ void* RechargerChargeHandler(void *arg)
         Handler->IsRechargeFinish = false;
         CurrentTimestampString = QString::number( TimestampHandling::GetInstance()->GetTimestamp(), '.', 0 );
 
-        RequestParameters = ( QObject::tr( "balance=" ) + QString::number( Handler->CardBalance, '.', 0 ) );
+        RequestParameters = ( QObject::tr( "balance=" ) + QString::number( Handler->CardBalance, 'g', 2 ) );
         RequestParameters += ( QObject::tr( "&cardNum=" ) + QString::number( Handler->CardNumber ) );
         RequestParameters += ( QObject::tr( "&devId=" ) + QString::number( Handler->DeviceID, 10 ) );
         RequestParameters += ( QObject::tr( "&out_trade_no=" ) + Handler->TradeNumber );
@@ -1060,9 +1060,9 @@ void* RechargerChargeHandler(void *arg)
         else
         {
 #ifdef CHINESE_OUTPUT
-            CardRecharger::SelfInstance->SetStatusLabel( QObject::tr( "交易成功!剩余余额为:" ) + QString::number( Handler->CardBalance, '.', 0 ) + QObject::tr( "元" )  );
+            CardRecharger::SelfInstance->SetStatusLabel( QObject::tr( "交易成功!剩余余额为:" ) + QString::number( Handler->CardBalance, 'g', 2 ) + QObject::tr( "元" )  );
 #else
-            CardRecharger::SelfInstance->SetStatusLabel( QObject::tr( "RechargeFinish Successfully! Balance = " ) + QString::number( Handler->CardBalance, '.', 0 ) );
+            CardRecharger::SelfInstance->SetStatusLabel( QObject::tr( "RechargeFinish Successfully! Balance = " ) + QString::number( Handler->CardBalance, 'g', 2 ) );
 #endif
         }
 
