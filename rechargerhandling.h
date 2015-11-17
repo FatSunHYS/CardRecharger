@@ -44,6 +44,7 @@ public:
     unsigned char SectionNumber;
     int CardNumber;
     double CardBalance;
+    double ConsumptionRecord;
     unsigned int CardSequenceNumber;
 	QString QRCodeAddress;
 	QString TradeNumber;

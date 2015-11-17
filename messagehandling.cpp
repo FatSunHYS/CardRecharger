@@ -86,7 +86,7 @@ void MessageHandling::ParsingRechargerMessages( MessageQueueNode* message )
 {
 	//qDebug() << QObject::tr( "IsError:") << message->IsError;
 
-	qDebug() << message->MessageContent;
+    //qDebug() << message->MessageContent;
 
 	switch( message->MessageAppID )
 	{

@@ -44,7 +44,7 @@ public:
                               unsigned char secnum,
                               unsigned char *CARDPassword,
                               unsigned int Delayms,
-                              unsigned int &record);
+                              double &record);
 
 
 

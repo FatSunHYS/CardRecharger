@@ -574,7 +574,7 @@ int ICCardDriver::readserialnumber( unsigned char *comdevice, unsigned char secn
 
 
 
-int ICCardDriver::readconsumptionrecord(unsigned char *comdevice, unsigned char secnum, unsigned char *CARDPassword, unsigned int Delayms, unsigned int &record)
+int ICCardDriver::readconsumptionrecord(unsigned char *comdevice, unsigned char secnum, unsigned char *CARDPassword, unsigned int Delayms, double &record)
 {
     int status;
     unsigned char sendbuf[26];
@@ -611,32 +611,43 @@ int ICCardDriver::readconsumptionrecord(unsigned char *comdevice, unsigned char 
         memcpy(precbuf, &recbuf[10], 16);
         if((0x55 == precbuf[14])&&(0xaa == precbuf[15]))
         {
-            double xf1;
-            double xf2;
-            int jqh;
-            int cjkh;
-            xf1 = ((double)precbuf[0]+(double)precbuf[1]*256+
-                    (double)precbuf[2]*256*256+(double)precbuf[3]*256*256*256)/100;
-            xf2 = ((double)(precbuf[4]^0xff)+(double)(precbuf[5]^0xff)*256+
-                    (double)(precbuf[6]^0xff)*256*256+(double)(precbuf[7]^0xff)*256*256*256)/100;
-            if(xf1 == xf2)
+//            double xf1;
+//            double xf2;
+//            int jqh;
+//            int cjkh;
+            int xf1_t = 0;
+            int xf2_t = 0;
+            for( int i = 0; i < 4; ++i )
             {
-                jqh = (int)precbuf[8]*256+(int)precbuf[9];
-                cjkh = (int)precbuf[10]*256*256*256+(int)precbuf[11]*256*256+
-                        (int)precbuf[12]*256+(int)precbuf[13];
-                //入库操作
-                ReChargeADOQ->Close();
-                String tjsqlstr = "insert into WTJ values(:JH,:CJKH,:XFZE,:SCSJ)";
-                ReChargeADOQ->SQL->Clear();
-                ReChargeADOQ->SQL->Add(tjsqlstr);
-                ReChargeADOQ->Parameters->ParamByName("JH")->Value = jqh;//机器号
-                ReChargeADOQ->Parameters->ParamByName("CJKH")->Value = cjkh;//采集卡号
-                ReChargeADOQ->Parameters->ParamByName("XFZE")->Value = xf1;//消费金额
-                ReChargeADOQ->Parameters->ParamByName("SCSJ")->Value = DateTimeToStr(Now());//采集时间
-                ReChargeADOQ->ExecSQL();
+                xf1_t = ( xf1_t << 8 ) + precbuf[ 3 - i ];
+                xf2_t = ( xf2_t << 8 ) + precbuf[ 7 - i ];
+            }
+
+//            xf1 = ((double)precbuf[0]+(double)precbuf[1]*256+
+//                    (double)precbuf[2]*256*256+(double)precbuf[3]*256*256*256)/100;
+//            xf2 = ((double)(precbuf[4]^0xff)+(double)(precbuf[5]^0xff)*256+
+//                    (double)(precbuf[6]^0xff)*256*256+(double)(precbuf[7]^0xff)*256*256*256)/100;
+
+            if(xf1_t == xf2_t)
+            {
+                record = ( double )xf1_t;
+                record /= 100;
+//                //入库操作
+//                ReChargeADOQ->Close();
+//                String tjsqlstr = "insert into WTJ values(:JH,:CJKH,:XFZE,:SCSJ)";
+//                ReChargeADOQ->SQL->Clear();
+//                ReChargeADOQ->SQL->Add(tjsqlstr);
+//                ReChargeADOQ->Parameters->ParamByName("JH")->Value = jqh;//机器号
+//                ReChargeADOQ->Parameters->ParamByName("CJKH")->Value = cjkh;//采集卡号
+//                ReChargeADOQ->Parameters->ParamByName("XFZE")->Value = xf1;//消费金额
+//                ReChargeADOQ->Parameters->ParamByName("SCSJ")->Value = DateTimeToStr(Now());//采集时间
+//                ReChargeADOQ->ExecSQL();
+                return 0;
             }
         }
     }
+
+    return -1;
 
 }
 

@@ -1,0 +1,3 @@
+* 2 * * * sh /home/AIROB/script/reboot.sh
+*/15 * * * * sh /home/AIROB/script/NTPrecalibrate.sh
+* * * * * sh /home/AIROB/script/test.sh

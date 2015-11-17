@@ -132,12 +132,13 @@ void* RechargerLoginHandler( void* arg )
 
         url.clear();
         url.setUrl( CardRecharger::SelfInstance->CardRechargerServerURL + QObject::tr( "/clientapi/login?" ) + LoginParameters );
-        qDebug() << QObject::tr( "RequestGet:" ) << url.toString();
+        //qDebug() << QObject::tr( "RequestGet:" ) << url.toString();
 
         RequestResult = Handler->RechargerClient.RequestGet( url, RespondContent );
         if( RequestResult != CURLE_OK )
         {
             qDebug() << QObject::tr( "Login Request error!" );
+            sleep( 2 );
             continue;
         }
 
@@ -185,7 +186,7 @@ void* RechargerLoginHandler( void* arg )
 
             url.clear();
             url.setUrl( CardRecharger::SelfInstance->CardRechargerServerURL + QObject::tr( "/clientapi/keepalived?" ) + LoginParameters + QObject::tr( "&sign=" ) + secret );
-            qDebug() << QObject::tr( "RequestGet:" ) << url.toString();
+            //qDebug() << QObject::tr( "RequestGet:" ) << url.toString();
 
             RequestResult = Handler->RechargerClient.RequestGet( url, RespondContent );
 
@@ -533,6 +534,8 @@ void* RechargerChargeHandler(void *arg)
             continue;
         }
 
+
+#if 0
         /* Testing code 'if' */
         if( Handler->PayWay == RechargerHandling::WeiXinPay )
         {
@@ -544,6 +547,7 @@ void* RechargerChargeHandler(void *arg)
             sleep( 5 );
             continue;
         }
+#endif
 
 
 
@@ -628,6 +632,32 @@ void* RechargerChargeHandler(void *arg)
         qDebug() << QObject::tr( "CardBalance = " ) << Handler->CardBalance;
         qDebug() << QObject::tr( "CardNumber = " ) << QString::number( Handler->CardNumber );
         qDebug() << QObject::tr( "CardSequenceNumber = " ) << QString::number( Handler->CardSequenceNumber );
+
+        CardStatus = ICCardHandler->readconsumptionrecord( ( unsigned char* )( CardRecharger::SelfInstance->DeviceSerials.toUtf8().data() ),
+                                                      Handler->SectionNumber,
+                                                      Handler->CardPassword,
+                                                      100,
+                                                      Handler->ConsumptionRecord );
+
+#if 0
+        if( CardStatus != 0 )
+        {
+            qDebug() << QObject::tr( "CardStatus = " ) << CardStatus;
+
+#ifdef CHINESE_OUTPUT
+            CardRecharger::SelfInstance->SetStatusLabel( QObject::tr( "读卡错误，请插好卡片！" ) );
+#else
+            CardRecharger::SelfInstance->SetStatusLabel( QObject::tr( "Read Card Sequence Number Error!" ) );
+#endif
+            sleep( 5 );
+            continue;
+        }
+
+        qDebug() << QObject::tr( "Read Consumption Record OK!" );
+        qDebug() << QObject::tr( "Consumption Record = " ) << QString::number( Handler->ConsumptionRecord );
+#endif
+
+
 
 #if 0
 

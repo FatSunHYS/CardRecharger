@@ -60,7 +60,7 @@ void* TimestampHandler( void* arg )
 	qDebug() << QObject::tr( "TimestampHandler is running..." );
 
 	QUrl url( CardRecharger::SelfInstance->CardRechargerServerURL + QObject::tr( "/clientapi/getSysTime" ) );
-	qDebug() << QObject::tr( "RequestGet:" ) << url.toString();
+    //qDebug() << QObject::tr( "RequestGet:" ) << url.toString();
 
 	while( true )
 	{
@@ -69,7 +69,13 @@ void* TimestampHandler( void* arg )
 		RequestResult = Handler->TimestampClient.RequestGet( url, RespondContent );
 		if( RequestResult != CURLE_OK )
 		{
-			qDebug() << QObject::tr( "Request Time Error!" );
+            qDebug() << QObject::tr( "Request Time Error! - 1" );
+#ifdef CHINESE_OUTPUT
+            CardRecharger::SelfInstance->SetStatusLabel( QObject::tr( "网络断开，请检查网络！"));
+#else
+            CardRecharger::SelfInstance->SetStatusLabel( QObject::tr( "Please reconnect the network!"));
+#endif
+            sleep( 2 );
 			continue;
 		}
 
@@ -85,6 +91,7 @@ void* TimestampHandler( void* arg )
 
 		if( Handler->GetTimestampRefreshState() == false )
 		{
+            qDebug() << QObject::tr( "Request Time Error! - 2" );
 #ifdef CHINESE_OUTPUT
             CardRecharger::SelfInstance->SetStatusLabel( QObject::tr( "网络断开，请检查网络！"));
 #else
@@ -104,9 +111,10 @@ void* TimestampHandler( void* arg )
 			Handler->RefreshTimestamp();
 			if( Handler->ReCalibrateIsNeeded == true )
 			{
+                qDebug() << QObject::tr( "ReCalibrate..." );
 				break;
 			}
-			qDebug() << QObject::tr( "current time: " ) << QString::number( Handler->GetTimestamp(), '.', 0 );
+            //qDebug() << QObject::tr( "current time: " ) << QString::number( Handler->GetTimestamp(), '.', 0 );
 		}
 
 	}
