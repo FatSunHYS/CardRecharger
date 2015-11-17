@@ -535,22 +535,6 @@ void* RechargerChargeHandler(void *arg)
         }
 
 
-#if 0
-        /* Testing code 'if' */
-        if( Handler->PayWay == RechargerHandling::WeiXinPay )
-        {
-#ifdef CHINESE_OUTPUT
-            CardRecharger::SelfInstance->SetStatusLabel( QObject::tr( "目前暂不支持微信支付!" ) );
-#else
-            CardRecharger::SelfInstance->SetStatusLabel( QObject::tr( "WeiXinPay is unavilable!" ) );
-#endif
-            sleep( 5 );
-            continue;
-        }
-#endif
-
-
-
         /* Read card. */
 
         memset( CardNumberBuffer, 0, sizeof( CardNumberBuffer ) );
@@ -633,13 +617,14 @@ void* RechargerChargeHandler(void *arg)
         qDebug() << QObject::tr( "CardNumber = " ) << QString::number( Handler->CardNumber );
         qDebug() << QObject::tr( "CardSequenceNumber = " ) << QString::number( Handler->CardSequenceNumber );
 
+#if 0
         CardStatus = ICCardHandler->readconsumptionrecord( ( unsigned char* )( CardRecharger::SelfInstance->DeviceSerials.toUtf8().data() ),
                                                       Handler->SectionNumber,
                                                       Handler->CardPassword,
                                                       100,
                                                       Handler->ConsumptionRecord );
 
-#if 0
+
         if( CardStatus != 0 )
         {
             qDebug() << QObject::tr( "CardStatus = " ) << CardStatus;
@@ -955,7 +940,7 @@ void* RechargerChargeHandler(void *arg)
         CardBalanceBuffer[ 2 ] = ( unsigned char )( ( TemperoryIntegerNumber & 0x0000FF00 ) >> 8 );
         CardBalanceBuffer[ 1 ] = ( unsigned char )( ( TemperoryIntegerNumber & 0x00FF0000 ) >> 16 );
         CardBalanceBuffer[ 0 ] = ( unsigned char )( ( TemperoryIntegerNumber & 0xFF000000 ) >> 24 );
-        ICCardHandler->writecard( ( unsigned char* )( CardRecharger::SelfInstance->DeviceSerials.toUtf8().data() ),
+        CardStatus = ICCardHandler->writecard( ( unsigned char* )( CardRecharger::SelfInstance->DeviceSerials.toUtf8().data() ),
                                   Handler->PasswordEdition,
                                   Handler->SectionNumber,
                                   Handler->CardPassword,
@@ -1109,6 +1094,8 @@ void RechargerHandling::ParsePrecreateMessage(QString &Message)
     char rechargerbuffer[ 1024 ];
     QRegExp RegularExpression;
     RegularExpression.setPattern( QObject::tr( "(\\{.*\\})([0-9a-z]{32})"));
+
+    //qDebug() << Message;
 
     RegularExpression.indexIn( Message );
     QStringList list = RegularExpression.capturedTexts();
@@ -1297,6 +1284,8 @@ void RechargerHandling::ParsePreRechargeCheckMessage(QString &Message)
     char rechargerbuffer[ 1024 ];
     QRegExp RegularExpression;
     RegularExpression.setPattern( QObject::tr( "(\\{.*\\})([0-9a-z]{32})"));
+
+    //qDebug() << Message;
 
     RegularExpression.indexIn( Message );
     QStringList list = RegularExpression.capturedTexts();
