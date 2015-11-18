@@ -4,18 +4,25 @@
 #include <QDebug>
 #include <QString>
 #include <QUrl>
+#include <QImage>
 
+#include <stdlib.h>
+#include <stdio.h>
 #include <unistd.h>
 
 #include "cardrecharger.h"
 #include "timestamphandling.h"
 #include "cJSON.h"
 
+#define BUFFERLENGTH 16384
+
 AdvertisementHandling* AdvertisementHandling::PrivateInstance = NULL;
 
 AdvertisementHandling::AdvertisementHandling()
 {
-
+    this->JSONBuffer = new char[ BUFFERLENGTH ];
+    this->CommandBuffer = new char[ BUFFERLENGTH ];
+    this->DownloadIsDone = false;
 }
 
 AdvertisementHandling* AdvertisementHandling::GetInstance()
@@ -64,6 +71,9 @@ void* AdvertisementDownloadHandler( void* arg )
     CURLcode RequestResult;
     QString RespondContent;
     AdvertisementHandling* Handler = AdvertisementHandling::GetInstance();
+    cJSON* root;
+    cJSON* AdvertiseList;
+    cJSON* AdvertiseItem;
 
     if( arg != NULL )
     {
@@ -72,7 +82,8 @@ void* AdvertisementDownloadHandler( void* arg )
 
     qDebug() << QObject::tr( "AdvertisementDownloadHandler is running..." );
 
-    // http://120.25.81.161:8080/XYJR/clientapi/adpicture/getAdPitureList
+    memset( Handler->JSONBuffer, 0, BUFFERLENGTH );
+    memset( Handler->CommandBuffer, 0, BUFFERLENGTH );
 
     url.clear();
     url.setUrl( CardRecharger::SelfInstance->CardRechargerServerURL + QObject::tr( "/clientapi/adpicture/getAdPitureList" ) );
@@ -87,14 +98,36 @@ void* AdvertisementDownloadHandler( void* arg )
             sleep( 3 );
             continue;
         }
-        else
+
+        strcpy( Handler->JSONBuffer, RespondContent.toUtf8().data() );
+        root = cJSON_Parse( Handler->JSONBuffer );
+
+        if( cJSON_GetObjectItem( root, "code" )->valueint != 0 )
         {
-            break;
+            qDebug() << QObject::tr( "AdvertisementDownload Request error! Retry after 3 second..." );
+            sleep( 3 );
+            continue;
         }
+
+        break;
     }
 
+    AdvertiseList = cJSON_GetObjectItem( root, "rows" );
+    Handler->AdvertisementTotal = cJSON_GetArraySize( AdvertiseList );
+
+    for( int i = 0; i < Handler->AdvertisementTotal; ++i )
+    {
+        AdvertiseItem = cJSON_GetArrayItem( AdvertiseList, i );
+        sprintf( Handler->CommandBuffer, "wget -q -O ./Advertisement/%d %s\n", i, cJSON_GetObjectItem( AdvertiseItem, "adPicUrl" )->valuestring );
+        qDebug( "%s", Handler->CommandBuffer );
+        system( Handler->CommandBuffer );
+    }
+
+    cJSON_Delete( root );
 
     qDebug() << QObject::tr( "AdvertisementDownloadHandler is finished..." );
+
+    Handler->DownloadIsDone = true;
 
     return ( void* )0;
 }
@@ -102,6 +135,10 @@ void* AdvertisementDownloadHandler( void* arg )
 
 void* AdvertisementShowHandler( void* arg )
 {
+    int i;
+    AdvertisementHandling* Handler = AdvertisementHandling::GetInstance();
+    QImage* image;
+
     if( arg != NULL )
     {
 
@@ -109,19 +146,35 @@ void* AdvertisementShowHandler( void* arg )
 
     qDebug() << QObject::tr( "AdvertisementShowHandler is running..." );
 
-    while( true )
+    while( Handler->DownloadIsDone == false )
     {
 
-        sleep( 120 );
+    }
+
+    while( true )
+    {
+        if( Handler->AdvertisementTotal == 0 )
+        {
+            CardRecharger::SelfInstance->ResetAdvertisementView();
+            sleep( 900 );
+            continue;
+        }
+
+        for( i = 0; i < Handler->AdvertisementTotal; ++i )
+        {
+            qDebug( "Playing the %i advertisements.", i );
+            image = new QImage();
+            sprintf( Handler->CommandBuffer, "./Advertisement/%d", i );
+            image->load( QString( Handler->CommandBuffer ) );
+            CardRecharger::SelfInstance->SetAdvertisementView( image );
+            sleep( 30 );
+            CardRecharger::SelfInstance->ResetAdvertisementView();
+        }
+
     }
 
     return ( void* )0;
 }
-
-
-
-
-
 
 
 

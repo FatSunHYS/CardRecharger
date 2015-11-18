@@ -32,6 +32,8 @@ public:
 	void SetStatusLabel( QString newstatus );
 	void SetQRView(QImage *image );
 	void ResetQRView();
+    void SetAdvertisementView( QImage *image );
+    void ResetAdvertisementView();
 
 
 private slots:
@@ -60,6 +62,11 @@ private:
 	QGraphicsScene* QRcodeScene;
 	bool QRcodeSceneIsEmpty;
 	QImage *qrimage;
+
+    pthread_mutex_t AdvertisementLocker;
+    QGraphicsScene* AdvertisementScene;
+    bool AdvertisementSceneIsEmpty;
+    QImage *AdvertisementImage;
 
 
 

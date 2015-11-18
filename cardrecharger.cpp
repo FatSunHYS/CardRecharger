@@ -30,6 +30,12 @@ CardRecharger::CardRecharger(QWidget *parent) :
 	this->QRcodeSceneIsEmpty = true;
 	this->qrimage = NULL;
 	pthread_mutex_init( &this->QRImageLocker, NULL );
+
+    this->AdvertisementScene = NULL;
+    this->AdvertisementSceneIsEmpty = true;
+    this->AdvertisementImage = NULL;
+    pthread_mutex_init( &this->AdvertisementLocker, NULL );
+
 	this->TimerID = this->startTimer( 500 );
 	if( this->TimerID == 0 )
 	{
@@ -80,6 +86,42 @@ void CardRecharger::timerEvent(QTimerEvent *event)
 	}
 
 	pthread_mutex_unlock( &this->QRImageLocker );
+
+    pthread_mutex_lock( &this->AdvertisementLocker );
+
+    if( this->AdvertisementImage == NULL )
+    {
+        if( AdvertisementSceneIsEmpty == false )
+        {
+            if( this->AdvertisementScene != NULL )
+            {
+                delete this->AdvertisementScene;
+            }
+            this->AdvertisementScene = new QGraphicsScene();
+            ui->AdvertisementGraphics->setScene( this->AdvertisementScene );
+            this->ui->AdvertisementGraphics->show();
+
+            AdvertisementSceneIsEmpty = true;
+        }
+    }
+    else
+    {
+        if( AdvertisementSceneIsEmpty == true )
+        {
+            if( this->AdvertisementScene != NULL )
+            {
+                delete this->AdvertisementScene;
+            }
+            this->AdvertisementScene = new QGraphicsScene();
+            ui->AdvertisementGraphics->setScene( this->AdvertisementScene );
+            this->AdvertisementScene->addPixmap( QPixmap::fromImage( *( this->AdvertisementImage ) ) );
+            this->ui->QRCodeImageGraphics->show();
+
+            AdvertisementSceneIsEmpty = false;
+        }
+    }
+
+    pthread_mutex_unlock( &this->AdvertisementLocker );
 
 }
 
@@ -559,10 +601,38 @@ void CardRecharger::ResetQRView()
 {
 	pthread_mutex_lock( &this->QRImageLocker );
 
-	delete this->qrimage;
-	this->qrimage = NULL;
+    if( this->qrimage != NULL )
+    {
+        delete this->qrimage;
+    }
+
+    this->qrimage = NULL;
 
 	pthread_mutex_unlock( &this->QRImageLocker );
+}
+
+
+void CardRecharger::SetAdvertisementView(QImage *image)
+{
+    pthread_mutex_lock( &this->AdvertisementLocker );
+
+    this->AdvertisementImage = image;
+
+    pthread_mutex_unlock( &this->AdvertisementLocker );
+}
+
+void CardRecharger::ResetAdvertisementView()
+{
+    pthread_mutex_lock( &this->AdvertisementLocker );
+
+    if( this->AdvertisementImage != NULL )
+    {
+        delete this->AdvertisementImage;
+    }
+
+    this->AdvertisementImage = NULL;
+
+    pthread_mutex_unlock( &this->AdvertisementLocker );
 }
 
 
