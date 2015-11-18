@@ -11,7 +11,6 @@
 #include "cardrecharger.h"
 #include "errordialog.h"
 
-#include "messagehandling.h"
 #include "timestamphandling.h"
 #include "rechargerhandling.h"
 #include "advertisementhandling.h"
@@ -46,11 +45,6 @@ int main(int argc, char *argv[])
 	//if( 0 )
 	{
         IsCreatPThreadSuccessfully = true;
-
-        if( MessageHandling::GetInstance()->CreatePThread() == false )
-        {
-            IsCreatPThreadSuccessfully = false;
-        }
 
         if( TimestampHandling::GetInstance()->CreatePThread() == false )
         {

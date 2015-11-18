@@ -3,7 +3,6 @@
 #include <QString>
 #include <QUrl>
 #include <QRegExp>
-//#include <QMessageBox>
 #include <QImage>
 #include <QColor>
 
@@ -11,7 +10,6 @@
 
 #include "rechargerhandling.h"
 #include "timestamphandling.h"
-#include "messagehandling.h"
 #include "cardrecharger.h"
 #include "cJSON.h"
 #include "iccarddriver.h"
@@ -24,15 +22,8 @@ RechargerHandling::RechargerHandling()
     this->EncrpytMD5 = new QCryptographicHash( QCryptographicHash::Md5 );
     this->PayWay = RechargerHandling::AliPay;
     pthread_mutex_init( &this->MD5Locker, NULL );
-    pthread_mutex_init( &this->RechargerLoginLocker, NULL );
-    pthread_cond_init( &this->LoginCondition, NULL );
-    pthread_cond_init( &this->HeartPackageCondition, NULL );
     pthread_mutex_init( &this->RechargerChargeLocker, NULL );
     pthread_cond_init( &this->ChargeActionCondition, NULL );
-    pthread_cond_init( &this->RequestQRCodeCondition, NULL );
-    pthread_cond_init( &this->QueryResultCondition, NULL );
-    pthread_cond_init( &this->PreRechargeCheckCondition, NULL );
-    pthread_cond_init(&this->RechargeFinishCondition, NULL );
 }
 
 
@@ -86,7 +77,6 @@ void* RechargerLoginHandler( void* arg )
     CURLcode RequestResult;
     QString RespondContent;
     RechargerHandling* Handler = RechargerHandling::GetInstance();
-    MessageQueueNode* TemperoryNode;
     int RechargerErrorCounter;
 
     if( arg != NULL )
@@ -94,7 +84,6 @@ void* RechargerLoginHandler( void* arg )
 
     }
 
-    pthread_mutex_lock( &Handler->RechargerLoginLocker );
     qDebug() << QObject::tr( "RechargerHandler is running..." );
 
     while( true )
@@ -142,15 +131,7 @@ void* RechargerLoginHandler( void* arg )
             continue;
         }
 
-        TemperoryNode = new MessageQueueNode();
-        TemperoryNode->MessageGroupID = MessageHandling::RechargerMessages;
-        TemperoryNode->MessageAppID = MessageHandling::Login;
-        TemperoryNode->MessageContent = RespondContent;
-
-        MessageHandling::GetInstance()->MessageQueuePointer->MessageEnqueue( TemperoryNode );
-        TemperoryNode = NULL;
-
-        pthread_cond_wait( &Handler->LoginCondition, &Handler->RechargerLoginLocker );
+        Handler->ParseLoginMessage( RespondContent );
 
         if( Handler->DeviceIsLogin == false )
         {
@@ -203,14 +184,7 @@ void* RechargerLoginHandler( void* arg )
                 continue;
             }
 
-            TemperoryNode = new MessageQueueNode();
-            TemperoryNode->MessageGroupID = MessageHandling::RechargerMessages;
-            TemperoryNode->MessageAppID = MessageHandling::KeepAlived;
-            TemperoryNode->MessageContent = RespondContent;
-            MessageHandling::GetInstance()->MessageQueuePointer->MessageEnqueue( TemperoryNode );
-            TemperoryNode = NULL;
-
-            pthread_cond_wait( &Handler->HeartPackageCondition, &Handler->RechargerLoginLocker );
+            Handler->ParseKeepAlivedMessage( RespondContent );
 
             if( Handler->IsKeepAlived == false )
             {
@@ -228,6 +202,7 @@ void* RechargerLoginHandler( void* arg )
             qDebug() << QObject::tr( "Send Heart Package successfully." );
             RechargerErrorCounter = 0;
 
+            //sleep( 10 );
             sleep( 900 );
             //sleep( 30 );
         }
@@ -253,7 +228,6 @@ void RechargerHandling::ParseLoginMessage(QString &Message)
 
     if( list.size() != 3 )
     {
-        pthread_cond_signal( &this->LoginCondition );
         return;
     }
 
@@ -262,7 +236,6 @@ void RechargerHandling::ParseLoginMessage(QString &Message)
 
     if( Message_JSON == QString( "" ) )
     {
-        pthread_cond_signal( &this->LoginCondition );
         return;
     }
 
@@ -277,7 +250,6 @@ void RechargerHandling::ParseLoginMessage(QString &Message)
     if( TemperoryCode != 0 )
     {
         cJSON_Delete( root );
-        pthread_cond_signal( &this->LoginCondition );
         return;
     }
 
@@ -293,7 +265,6 @@ void RechargerHandling::ParseLoginMessage(QString &Message)
     /* Checkout the MD5 */
     if( Message_MD5 == QString( "" ) )
     {
-        pthread_cond_signal( &this->LoginCondition );
         return;
     }
 
@@ -314,7 +285,6 @@ void RechargerHandling::ParseLoginMessage(QString &Message)
     else
     {
         qDebug() << QObject::tr( "MD5 is error. MD5 = " ) << TestMD5Result;
-        pthread_cond_signal( &this->LoginCondition );
         return;
     }
 
@@ -322,7 +292,6 @@ void RechargerHandling::ParseLoginMessage(QString &Message)
     if( TransferIsOK == false || TemperoryIntegerNumber >= 255 || TemperoryIntegerNumber < 0 )
     {
         qDebug() << QObject::tr( "Transfer Section Number is error! - SecNum = " ) << SecNum;
-        pthread_cond_signal( &this->LoginCondition );
         return;
     }
     this->SectionNumber = ( unsigned char )( TemperoryIntegerNumber & 0xFF );
@@ -331,7 +300,6 @@ void RechargerHandling::ParseLoginMessage(QString &Message)
     if( TransferIsOK == false || TemperoryIntegerNumber >= 255 || TemperoryIntegerNumber < 0 )
     {
         qDebug() << QObject::tr( "Transfer Passward Edition is error! - MMEdition = " ) << MMEdition;
-        pthread_cond_signal( &this->LoginCondition );
         return;
     }
     this->PasswordEdition = ( unsigned char )( TemperoryIntegerNumber & 0xFF );
@@ -358,7 +326,6 @@ void RechargerHandling::ParseLoginMessage(QString &Message)
         else
         {
             qDebug() << QObject::tr( "Parse Card Password failed!" );
-            pthread_cond_signal( &this->LoginCondition );
             return;
         }
 
@@ -379,14 +346,12 @@ void RechargerHandling::ParseLoginMessage(QString &Message)
         else
         {
             qDebug() << QObject::tr( "Parse Card Password failed!" );
-            pthread_cond_signal( &this->LoginCondition );
             return;
         }
     }
 
     this->DeviceIsLogin = true;
 
-    pthread_cond_signal( &this->LoginCondition );
 }
 
 
@@ -402,7 +367,6 @@ void RechargerHandling::ParseKeepAlivedMessage(QString &Message)
 
     if( list.size() != 3 )
     {
-        pthread_cond_signal( &this->HeartPackageCondition );
         return;
     }
 
@@ -411,7 +375,6 @@ void RechargerHandling::ParseKeepAlivedMessage(QString &Message)
 
     if( Message_JSON == QString( "" ) )
     {
-        pthread_cond_signal( &this->HeartPackageCondition );
         return;
     }
 
@@ -426,7 +389,6 @@ void RechargerHandling::ParseKeepAlivedMessage(QString &Message)
     if( TemperoryCode != 0 )
     {
         cJSON_Delete( root );
-        pthread_cond_signal( &this->HeartPackageCondition );
         return;
     }
 
@@ -436,7 +398,6 @@ void RechargerHandling::ParseKeepAlivedMessage(QString &Message)
     /* Checkout the MD5 */
     if( Message_MD5 == QString( "" ) )
     {
-        pthread_cond_signal( &this->HeartPackageCondition );
         return;
     }
 
@@ -457,12 +418,10 @@ void RechargerHandling::ParseKeepAlivedMessage(QString &Message)
     else
     {
         qDebug() << QObject::tr( "MD5 is error. MD5 = " ) << TestMD5Result;
-        pthread_cond_signal( &this->HeartPackageCondition );
         return;
     }
 
     this->IsKeepAlived = true;
-    pthread_cond_signal( &this->HeartPackageCondition );
 }
 
 
@@ -477,7 +436,6 @@ void* RechargerChargeHandler(void *arg)
     QUrl url;
     CURLcode RequestResult;
     QString RespondContent;
-    MessageQueueNode* TemperoryNode;
     QRcode* qr;
     QImage* qrimage;
     QPainter qrpainter;
@@ -727,15 +685,8 @@ void* RechargerChargeHandler(void *arg)
             continue;
         }
 
-        TemperoryNode = new MessageQueueNode();
-        TemperoryNode->MessageGroupID = MessageHandling::RechargerMessages;
-        TemperoryNode->MessageAppID = MessageHandling::Precreate;
-        TemperoryNode->MessageContent = RespondContent;
+        Handler->ParsePrecreateMessage( RespondContent );
 
-        MessageHandling::GetInstance()->MessageQueuePointer->MessageEnqueue( TemperoryNode );
-        TemperoryNode = NULL;
-
-        pthread_cond_wait( &Handler->RequestQRCodeCondition, &Handler->RechargerChargeLocker );
         if( Handler->TradeStatus != QString( "PRECREATE_SUCCESS" ) )
         {
 #ifdef CHINESE_OUTPUT
@@ -820,15 +771,8 @@ void* RechargerChargeHandler(void *arg)
                 break;
             }
 
-            TemperoryNode = new MessageQueueNode();
-            TemperoryNode->MessageGroupID = MessageHandling::RechargerMessages;
-            TemperoryNode->MessageAppID = MessageHandling::Query;
-            TemperoryNode->MessageContent = RespondContent;
+            Handler->ParseQueryMessage( RespondContent );
 
-            MessageHandling::GetInstance()->MessageQueuePointer->MessageEnqueue( TemperoryNode );
-            TemperoryNode = NULL;
-
-            pthread_cond_wait( &Handler->QueryResultCondition, &Handler->RechargerChargeLocker );
             if( Handler->TradeStatus == QString( "TRADE_CLOSED" ) )
             {
 #ifdef CHINESE_OUTPUT
@@ -908,15 +852,8 @@ void* RechargerChargeHandler(void *arg)
             break;
         }
 
-        TemperoryNode = new MessageQueueNode();
-        TemperoryNode->MessageGroupID = MessageHandling::RechargerMessages;
-        TemperoryNode->MessageAppID = MessageHandling::PreRechargeCheck;
-        TemperoryNode->MessageContent = RespondContent;
+        Handler->ParsePreRechargeCheckMessage( RespondContent );
 
-        MessageHandling::GetInstance()->MessageQueuePointer->MessageEnqueue( TemperoryNode );
-        TemperoryNode = NULL;
-
-        pthread_cond_wait( &Handler->PreRechargeCheckCondition, &Handler->RechargerChargeLocker );
         if( Handler->PreRechargeCheckIsSuccessfully == false )
         {
 #ifdef CHINESE_OUTPUT
@@ -1031,15 +968,8 @@ void* RechargerChargeHandler(void *arg)
             break;
         }
 
-        TemperoryNode = new MessageQueueNode();
-        TemperoryNode->MessageGroupID = MessageHandling::RechargerMessages;
-        TemperoryNode->MessageAppID = MessageHandling::RechargeFinish;
-        TemperoryNode->MessageContent = RespondContent;
+        Handler->ParseRechargeFinishMessage( RespondContent );
 
-        MessageHandling::GetInstance()->MessageQueuePointer->MessageEnqueue( TemperoryNode );
-        TemperoryNode = NULL;
-
-        pthread_cond_wait( &Handler->RechargeFinishCondition, &Handler->RechargerChargeLocker );
         if( Handler->IsRechargeFinish == false )
         {
 #ifdef CHINESE_OUTPUT
@@ -1100,9 +1030,10 @@ void RechargerHandling::ParsePrecreateMessage(QString &Message)
     RegularExpression.indexIn( Message );
     QStringList list = RegularExpression.capturedTexts();
 
+    this->TradeStatus = QObject::tr( "" );
+
     if( list.size() != 3 )
     {
-        pthread_cond_signal( &this->RequestQRCodeCondition );
         return;
     }
 
@@ -1111,7 +1042,6 @@ void RechargerHandling::ParsePrecreateMessage(QString &Message)
 
     if( Message_JSON == QString( "" ) )
     {
-        pthread_cond_signal( &this->RequestQRCodeCondition );
         return;
     }
 
@@ -1126,7 +1056,6 @@ void RechargerHandling::ParsePrecreateMessage(QString &Message)
     if( TemperoryCode != 0 )
     {
         cJSON_Delete( root );
-        pthread_cond_signal( &this->RequestQRCodeCondition );
         return;
     }
 
@@ -1140,7 +1069,6 @@ void RechargerHandling::ParsePrecreateMessage(QString &Message)
     /* Checkout the MD5 */
     if( Message_MD5 == QString( "" ) )
     {
-        pthread_cond_signal( &this->RequestQRCodeCondition );
         return;
     }
 
@@ -1161,7 +1089,6 @@ void RechargerHandling::ParsePrecreateMessage(QString &Message)
     else
     {
         qDebug() << QObject::tr( "MD5 is error. MD5 = " ) << TestMD5Result;
-        pthread_cond_signal( &this->RequestQRCodeCondition );
         return;
     }
 
@@ -1172,7 +1099,6 @@ void RechargerHandling::ParsePrecreateMessage(QString &Message)
     //qDebug() << QObject::tr( "qrcode = " ) << this->QRCodeAddress;
     //qDebug() << QObject::tr( "trade number = " ) << this->TradeNumber;
     //qDebug() << QObject::tr( "trade status = " ) << this->TradeStatus;
-    pthread_cond_signal( &this->RequestQRCodeCondition );
 
 }
 
@@ -1211,7 +1137,6 @@ void RechargerHandling::ParseQueryMessage(QString &Message)
 
     if( list.size() != 3 )
     {
-        pthread_cond_signal( &this->QueryResultCondition );
         return;
     }
 
@@ -1220,7 +1145,6 @@ void RechargerHandling::ParseQueryMessage(QString &Message)
 
     if( Message_JSON == QString( "" ) )
     {
-        pthread_cond_signal( &this->QueryResultCondition );
         return;
     }
 
@@ -1235,7 +1159,6 @@ void RechargerHandling::ParseQueryMessage(QString &Message)
     if( TemperoryCode != 0 )
     {
         cJSON_Delete( root );
-        pthread_cond_signal( &this->QueryResultCondition );
         return;
     }
 
@@ -1247,7 +1170,6 @@ void RechargerHandling::ParseQueryMessage(QString &Message)
     /* Checkout the MD5 */
     if( Message_MD5 == QString( "" ) )
     {
-        pthread_cond_signal( &this->QueryResultCondition );
         return;
     }
 
@@ -1268,14 +1190,12 @@ void RechargerHandling::ParseQueryMessage(QString &Message)
     else
     {
         qDebug() << QObject::tr( "MD5 is error. MD5 = " ) << TestMD5Result;
-        pthread_cond_signal( &this->QueryResultCondition );
         return;
     }
 
     this->TradeStatus = trade_status;
 
     //qDebug() << QObject::tr( "trade status = " ) << this->TradeStatus;
-    pthread_cond_signal( &this->QueryResultCondition );
 }
 
 
@@ -1286,13 +1206,13 @@ void RechargerHandling::ParsePreRechargeCheckMessage(QString &Message)
     RegularExpression.setPattern( QObject::tr( "(\\{.*\\})([0-9a-z]{32})"));
 
     //qDebug() << Message;
+    this->PreRechargeCheckIsSuccessfully = false;
 
     RegularExpression.indexIn( Message );
     QStringList list = RegularExpression.capturedTexts();
 
     if( list.size() != 3 )
     {
-        pthread_cond_signal( &this->PreRechargeCheckCondition );
         return;
     }
 
@@ -1301,7 +1221,6 @@ void RechargerHandling::ParsePreRechargeCheckMessage(QString &Message)
 
     if( Message_JSON == QString( "" ) )
     {
-        pthread_cond_signal( &this->PreRechargeCheckCondition );
         return;
     }
 
@@ -1316,7 +1235,6 @@ void RechargerHandling::ParsePreRechargeCheckMessage(QString &Message)
     if( TemperoryCode != 0 )
     {
         cJSON_Delete( root );
-        pthread_cond_signal( &this->PreRechargeCheckCondition );
         return;
     }
 
@@ -1326,7 +1244,6 @@ void RechargerHandling::ParsePreRechargeCheckMessage(QString &Message)
     /* Checkout the MD5 */
     if( Message_MD5 == QString( "" ) )
     {
-        pthread_cond_signal( &this->PreRechargeCheckCondition );
         return;
     }
 
@@ -1347,12 +1264,10 @@ void RechargerHandling::ParsePreRechargeCheckMessage(QString &Message)
     else
     {
         qDebug() << QObject::tr( "MD5 is error. MD5 = " ) << TestMD5Result;
-        pthread_cond_signal( &this->PreRechargeCheckCondition );
         return;
     }
 
     this->PreRechargeCheckIsSuccessfully = true;
-    pthread_cond_signal( &this->PreRechargeCheckCondition );
 }
 
 
@@ -1367,7 +1282,6 @@ void RechargerHandling::ParseRechargeFinishMessage(QString &Message)
 
     if( list.size() != 3 )
     {
-        pthread_cond_signal( &this->RechargeFinishCondition );
         return;
     }
 
@@ -1376,7 +1290,6 @@ void RechargerHandling::ParseRechargeFinishMessage(QString &Message)
 
     if( Message_JSON == QString( "" ) )
     {
-        pthread_cond_signal( &this->RechargeFinishCondition );
         return;
     }
 
@@ -1391,7 +1304,6 @@ void RechargerHandling::ParseRechargeFinishMessage(QString &Message)
     if( TemperoryCode != 0 )
     {
         cJSON_Delete( root );
-        pthread_cond_signal( &this->RechargeFinishCondition );
         return;
     }
 
@@ -1401,7 +1313,6 @@ void RechargerHandling::ParseRechargeFinishMessage(QString &Message)
     /* Checkout the MD5 */
     if( Message_MD5 == QString( "" ) )
     {
-        pthread_cond_signal( &this->RechargeFinishCondition );
         return;
     }
 
@@ -1422,11 +1333,9 @@ void RechargerHandling::ParseRechargeFinishMessage(QString &Message)
     else
     {
         qDebug() << QObject::tr( "MD5 is error. MD5 = " ) << TestMD5Result;
-        pthread_cond_signal( &this->RechargeFinishCondition );
         return;
     }
 
     this->IsRechargeFinish = true;
-    pthread_cond_signal( &this->RechargeFinishCondition );
 }
 

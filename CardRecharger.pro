@@ -17,9 +17,6 @@ SOURCES += main.cpp\
     iccarddriver.cpp \
     inifile.c \
     httpclient.cpp \
-    messagequeue.cpp \
-    messagequeuenode.cpp \
-    messagehandling.cpp \
     rechargerhandling.cpp \
     timestamphandling.cpp \
     cJSON.c \
@@ -30,9 +27,6 @@ HEADERS  += cardrecharger.h \
     iccarddriver.h \
     inifile.h \
     httpclient.h \
-    messagequeue.h \
-    messagequeuenode.h \
-    messagehandling.h \
     rechargerhandling.h \
     timestamphandling.h \
     cJSON.h \
@@ -49,5 +43,5 @@ LIBS += -lqrencode
 
 DEFINES += CURL_STATICLIB
 
-#DEFINES += EMBEDDED_BOARD
-#DEFINES += CHINESE_OUTPUT
+DEFINES += EMBEDDED_BOARD
+DEFINES += CHINESE_OUTPUT

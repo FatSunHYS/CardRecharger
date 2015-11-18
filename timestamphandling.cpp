@@ -13,9 +13,6 @@ using namespace std;
 
 #include "timestamphandling.h"
 #include "cardrecharger.h"
-#include "messagehandling.h"
-#include "messagequeue.h"
-#include "messagequeuenode.h"
 #include "cJSON.h"
 
 
@@ -26,9 +23,7 @@ TimestampHandling::TimestampHandling()
 	this->TimestampIsRefreshed = false;
 	this->unixtimestamp = 0;
 	this->FirstInitialed = false;
-	this->ReCalibrateIsNeeded = false;
-	pthread_mutex_init( &this->TimestampLocker, NULL );
-	pthread_cond_init( &this->RefreshCondition, NULL );
+    this->ReCalibrateIsNeeded = false;
 }
 
 
@@ -48,15 +43,13 @@ void* TimestampHandler( void* arg )
 {
 	TimestampHandling* Handler = TimestampHandling::GetInstance();
 	CURLcode RequestResult;
-	QString RespondContent;
-	MessageQueueNode* TemperoryNode;
+    QString RespondContent;
 
 	if( arg != NULL )
 	{
 
 	}
 
-	pthread_mutex_lock( &Handler->TimestampLocker );
 	qDebug() << QObject::tr( "TimestampHandler is running..." );
 
 	QUrl url( CardRecharger::SelfInstance->CardRechargerServerURL + QObject::tr( "/clientapi/getSysTime" ) );
@@ -80,18 +73,6 @@ void* TimestampHandler( void* arg )
 		}
 
         Handler->ParseGetSysTimeMessage( RespondContent );
-
-/*
-		TemperoryNode = new MessageQueueNode();
-		TemperoryNode->MessageGroupID = MessageHandling::RechargerMessages;
-		TemperoryNode->MessageAppID = MessageHandling::GetSysTime;
-		TemperoryNode->MessageContent = RespondContent;
-
-		MessageHandling::GetInstance()->MessageQueuePointer->MessageEnqueue( TemperoryNode );
-		TemperoryNode = NULL;
-
-		pthread_cond_wait( &Handler->RefreshCondition, &Handler->TimestampLocker );
-*/
 
 		if( Handler->GetTimestampRefreshState() == false )
 		{
@@ -209,7 +190,6 @@ void TimestampHandling::ParseGetSysTimeMessage(QString &Message)
 
 	cJSON_Delete( root );
 
-    //pthread_cond_signal( &this->RefreshCondition );
 }
 
 

@@ -9,7 +9,6 @@
 
 #include "cardrecharger.h"
 #include "timestamphandling.h"
-#include "messagehandling.h"
 #include "cJSON.h"
 
 AdvertisementHandling* AdvertisementHandling::PrivateInstance = NULL;

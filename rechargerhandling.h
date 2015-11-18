@@ -22,16 +22,9 @@ public:
 
 	HttpClient RechargerClient;
 	QCryptographicHash* EncrpytMD5;
-	pthread_mutex_t MD5Locker;
-	pthread_mutex_t RechargerLoginLocker;
-	pthread_cond_t LoginCondition;
-	pthread_cond_t HeartPackageCondition;
+    pthread_mutex_t MD5Locker;
 	pthread_mutex_t RechargerChargeLocker;
-	pthread_cond_t ChargeActionCondition;
-	pthread_cond_t RequestQRCodeCondition;
-	pthread_cond_t QueryResultCondition;
-	pthread_cond_t PreRechargeCheckCondition;
-	pthread_cond_t RechargeFinishCondition;
+    pthread_cond_t ChargeActionCondition;
 	int DeviceID;
 	QString DeviceToken;
 	bool DeviceIsLogin;
