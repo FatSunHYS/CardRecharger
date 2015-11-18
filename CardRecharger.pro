@@ -23,7 +23,8 @@ SOURCES += main.cpp\
     rechargerhandling.cpp \
     timestamphandling.cpp \
     cJSON.c \
-    errordialog.cpp
+    errordialog.cpp \
+    advertisementhandling.cpp
 
 HEADERS  += cardrecharger.h \
     iccarddriver.h \
@@ -35,7 +36,8 @@ HEADERS  += cardrecharger.h \
     rechargerhandling.h \
     timestamphandling.h \
     cJSON.h \
-    errordialog.h
+    errordialog.h \
+    advertisementhandling.h
 
 FORMS    += cardrecharger.ui \
     errordialog.ui

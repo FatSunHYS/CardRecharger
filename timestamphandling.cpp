@@ -79,6 +79,9 @@ void* TimestampHandler( void* arg )
 			continue;
 		}
 
+        Handler->ParseGetSysTimeMessage( RespondContent );
+
+/*
 		TemperoryNode = new MessageQueueNode();
 		TemperoryNode->MessageGroupID = MessageHandling::RechargerMessages;
 		TemperoryNode->MessageAppID = MessageHandling::GetSysTime;
@@ -88,6 +91,7 @@ void* TimestampHandler( void* arg )
 		TemperoryNode = NULL;
 
 		pthread_cond_wait( &Handler->RefreshCondition, &Handler->TimestampLocker );
+*/
 
 		if( Handler->GetTimestampRefreshState() == false )
 		{
@@ -205,7 +209,7 @@ void TimestampHandling::ParseGetSysTimeMessage(QString &Message)
 
 	cJSON_Delete( root );
 
-	pthread_cond_signal( &this->RefreshCondition );
+    //pthread_cond_signal( &this->RefreshCondition );
 }
 
 

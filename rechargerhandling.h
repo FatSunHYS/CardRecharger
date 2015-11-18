@@ -64,10 +64,6 @@ public:
 	void DrawQRcodeImage( QRcode* qr, QPainter &painter, int width, int height );
 	void SendUpdateQRImageSignal();
 
-
-signals:
-	void UpdateQRImageClick();
-
 private:
 	static RechargerHandling* PrivateInstance;
 	pthread_t RechargerHandling1PthreadID;

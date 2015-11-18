@@ -11,6 +11,7 @@ cd ${LocalPath}
 cat ./conf/RootPassword | passwd root | tee -a ${Log}
 
 mkdir -p ${InstallationPath} | tee -a ${Log}
+mkdir -p ${InstallationPath}/Advertisement | tee -a ${Log}
 echo "Build the directory for the program done!" | tee -a ${Log}
 
 cd ${LocalPath}/Library
@@ -50,7 +51,9 @@ cp -p /etc/crontabs/root.crontabs /var/spool/cron/crontabs/root
 107a\
 chmod 777 /var/spool/cron/crontabs/root
 107a\
-crond' ./rcS
+crond
+103a\
+rm -rf /home/AIROB/Advertisement/*' ./rcS
 echo "Modify the /etc/init.d/rcS done!" | tee -a ${Log}
 
 cd /bin

@@ -3,7 +3,7 @@
 #include <QString>
 #include <QUrl>
 #include <QRegExp>
-#include <QMessageBox>
+//#include <QMessageBox>
 #include <QImage>
 #include <QColor>
 

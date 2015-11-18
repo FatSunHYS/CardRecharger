@@ -14,15 +14,15 @@
 #include "messagehandling.h"
 #include "timestamphandling.h"
 #include "rechargerhandling.h"
+#include "advertisementhandling.h"
 #include "inifile.h"
-
-MessageHandling* DebugMessageHandlingInstance;
-RechargerHandling* DebugRechargerHandlingInstance;
 
 bool SystemInitialization();
 
 int main(int argc, char *argv[])
 {
+    bool IsCreatPThreadSuccessfully;
+
     QApplication a(argc, argv);
 
 #ifdef EMBEDDED_BOARD
@@ -45,15 +45,38 @@ int main(int argc, char *argv[])
 	if( SystemInitialization() )
 	//if( 0 )
 	{
+        IsCreatPThreadSuccessfully = true;
 
-		DebugMessageHandlingInstance = MessageHandling::GetInstance();
-		DebugMessageHandlingInstance->CreatePThread();
-		TimestampHandling::GetInstance()->CreatePThread();
-		DebugRechargerHandlingInstance = RechargerHandling::GetInstance();
-		RechargerHandling::GetInstance()->CreatePThread();
+        if( MessageHandling::GetInstance()->CreatePThread() == false )
+        {
+            IsCreatPThreadSuccessfully = false;
+        }
 
-		w.setWindowFlags( Qt::FramelessWindowHint );
-		w.show();
+        if( TimestampHandling::GetInstance()->CreatePThread() == false )
+        {
+            IsCreatPThreadSuccessfully = false;
+        }
+
+        if( RechargerHandling::GetInstance()->CreatePThread() == false )
+        {
+            IsCreatPThreadSuccessfully = false;
+        }
+
+        if( AdvertisementHandling::GetInstance()->CreatePThread() == false )
+        {
+            IsCreatPThreadSuccessfully = false;
+        }
+
+        if( IsCreatPThreadSuccessfully == true )
+        {
+            w.setWindowFlags( Qt::FramelessWindowHint );
+            w.show();
+        }
+        else
+        {
+            e.setWindowFlags( Qt::FramelessWindowHint );
+            e.show();
+        }
 	}
 	else
 	{
