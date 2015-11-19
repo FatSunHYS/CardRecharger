@@ -30,6 +30,7 @@ public:
 	void AllButtonEnable();
 	void AllButtonDisable();
 	void SetStatusLabel( QString newstatus );
+    void SetBalanceLabel(QString newbalance );
 	void SetQRView(QImage *image );
 	void ResetQRView();
     void SetAdvertisementView( QImage *image );
@@ -49,6 +50,7 @@ private slots:
     void on_GreyRecordButton_clicked();
 	void on_PayWay_Ali_clicked();
 	void on_PayWay_WeiXin_clicked();
+    void on_ReadBalanceButton_clicked();
 
 protected:
 	int TimerID;
@@ -66,8 +68,7 @@ private:
     pthread_mutex_t AdvertisementLocker;
     QGraphicsScene* AdvertisementScene;
     bool AdvertisementSceneIsEmpty;
-    QImage *AdvertisementImage;
-
+    QImage *AdvertisementImage;  
 
 
 };

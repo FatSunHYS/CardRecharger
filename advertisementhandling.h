@@ -21,15 +21,13 @@ public:
 
 private:
     static AdvertisementHandling* PrivateInstance;
-    pthread_t AdvertisementHandling1PthreadID;
-    pthread_t AdvertisementHandling2PthreadID;
+    pthread_t AdvertisementHandlingPthreadID;
 
 
 
     AdvertisementHandling();
 };
 
-void* AdvertisementDownloadHandler( void* arg );
-void* AdvertisementShowHandler( void* arg );
+void* AdvertisementHandler( void* arg );
 
 #endif // ADVERTISEMENTHANDLING_H

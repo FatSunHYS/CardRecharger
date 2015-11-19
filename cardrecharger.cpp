@@ -160,8 +160,8 @@ void CardRecharger::on_Recharge5Button_clicked()
 #endif
 
 	{
-        //RechargerHandling::GetInstance()->RechargeValue = 5;
-        RechargerHandling::GetInstance()->RechargeValue = 1;
+        RechargerHandling::GetInstance()->RechargeValue = 5;
+        //RechargerHandling::GetInstance()->RechargeValue = 1;
 		pthread_cond_signal( &( RechargerHandling::GetInstance()->ChargeActionCondition ) );
 	}
 	else
@@ -548,6 +548,7 @@ void CardRecharger::AllButtonDisable()
 	ui->GreyRecordButton->setEnabled( false );
 	ui->PayWay_Ali->setEnabled( false );
 	ui->PayWay_WeiXin->setEnabled( false );
+    ui->ReadBalanceButton->setEnabled( false );
 }
 
 void CardRecharger::AllButtonEnable()
@@ -564,6 +565,7 @@ void CardRecharger::AllButtonEnable()
 	ui->GreyRecordButton->setEnabled( true );
 	ui->PayWay_Ali->setEnabled( true );
 	ui->PayWay_WeiXin->setEnabled( true );
+    ui->ReadBalanceButton->setEnabled( true );
 }
 
 
@@ -636,3 +638,17 @@ void CardRecharger::ResetAdvertisementView()
 }
 
 
+
+void CardRecharger::on_ReadBalanceButton_clicked()
+{
+    this->AllButtonDisable();
+
+    pthread_cond_signal( &( RechargerHandling::GetInstance()->WaitReadBalanceCondition ) );
+
+}
+
+
+void CardRecharger::SetBalanceLabel(QString newbalance)
+{
+    ui->BalanceShowLabel->setText( newbalance );
+}

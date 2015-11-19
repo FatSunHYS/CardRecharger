@@ -37,35 +37,23 @@ AdvertisementHandling* AdvertisementHandling::GetInstance()
 
 bool AdvertisementHandling::CreatePThread()
 {
-    int err = pthread_create( &( this->AdvertisementHandling1PthreadID ), NULL, AdvertisementDownloadHandler, NULL );
+    int err = pthread_create( &( this->AdvertisementHandlingPthreadID ), NULL, AdvertisementHandler, NULL );
 
     if( err != 0 )
     {
-        qDebug() << QObject::tr( "Create pthread AdvertisementDownloadHandler error!" );
+        qDebug() << QObject::tr( "Create pthread AdvertisementHandler error!" );
         return false;
     }
     else
     {
-        qDebug() << QObject::tr( "Create pthread AdvertisementDownloadHandler Successfully." );
-    }
-
-    err = pthread_create( &( this->AdvertisementHandling2PthreadID ), NULL, AdvertisementShowHandler, NULL );
-
-    if( err != 0 )
-    {
-        qDebug() << QObject::tr( "Create pthread AdvertisementShowHandler error!" );
-        return false;
-    }
-    else
-    {
-        qDebug() << QObject::tr( "Create pthread AdvertisementShowHandler Successfully." );
+        qDebug() << QObject::tr( "Create pthread AdvertisementHandler Successfully." );
     }
 
     return true;
 }
 
 
-void* AdvertisementDownloadHandler( void* arg )
+void* AdvertisementHandler( void* arg )
 {
     QUrl url;
     CURLcode RequestResult;
@@ -74,13 +62,15 @@ void* AdvertisementDownloadHandler( void* arg )
     cJSON* root;
     cJSON* AdvertiseList;
     cJSON* AdvertiseItem;
+    QImage* image;
+    int i;
 
     if( arg != NULL )
     {
 
     }
 
-    qDebug() << QObject::tr( "AdvertisementDownloadHandler is running..." );
+    qDebug() << QObject::tr( "AdvertisementHandler is running..." );
 
     memset( Handler->JSONBuffer, 0, BUFFERLENGTH );
     memset( Handler->CommandBuffer, 0, BUFFERLENGTH );
@@ -115,7 +105,7 @@ void* AdvertisementDownloadHandler( void* arg )
     AdvertiseList = cJSON_GetObjectItem( root, "rows" );
     Handler->AdvertisementTotal = cJSON_GetArraySize( AdvertiseList );
 
-    for( int i = 0; i < Handler->AdvertisementTotal; ++i )
+    for( i = 0; i < Handler->AdvertisementTotal; ++i )
     {
         AdvertiseItem = cJSON_GetArrayItem( AdvertiseList, i );
         sprintf( Handler->CommandBuffer, "wget -q -O ./Advertisement/%d %s\n", i, cJSON_GetObjectItem( AdvertiseItem, "adPicUrl" )->valuestring );
@@ -124,32 +114,6 @@ void* AdvertisementDownloadHandler( void* arg )
     }
 
     cJSON_Delete( root );
-
-    qDebug() << QObject::tr( "AdvertisementDownloadHandler is finished..." );
-
-    Handler->DownloadIsDone = true;
-
-    return ( void* )0;
-}
-
-
-void* AdvertisementShowHandler( void* arg )
-{
-    int i;
-    AdvertisementHandling* Handler = AdvertisementHandling::GetInstance();
-    QImage* image;
-
-    if( arg != NULL )
-    {
-
-    }
-
-    qDebug() << QObject::tr( "AdvertisementShowHandler is running..." );
-
-    while( Handler->DownloadIsDone == false )
-    {
-
-    }
 
     while( true )
     {
@@ -175,6 +139,8 @@ void* AdvertisementShowHandler( void* arg )
 
     return ( void* )0;
 }
+
+
 
 
 

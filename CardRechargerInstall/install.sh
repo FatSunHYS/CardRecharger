@@ -12,6 +12,7 @@ cat ./conf/RootPassword | passwd root | tee -a ${Log}
 
 mkdir -p ${InstallationPath} | tee -a ${Log}
 mkdir -p ${InstallationPath}/Advertisement | tee -a ${Log}
+mkdir -p ${InstallationPath}/LogFile | tee -a ${Log}
 echo "Build the directory for the program done!" | tee -a ${Log}
 
 cd ${LocalPath}/Library
@@ -63,6 +64,8 @@ cd /home/AIROB
 7c\
 ./CardRecharger -qws' ./qt4
 echo "Modify the /bin/qt4 done!" | tee -a ${Log}
+
+cp -v ${Log} ${InstallationPath}/LogFile/
 
 reboot
 

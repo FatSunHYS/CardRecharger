@@ -25,6 +25,9 @@ public:
     pthread_mutex_t MD5Locker;
 	pthread_mutex_t RechargerChargeLocker;
     pthread_cond_t ChargeActionCondition;
+    pthread_mutex_t RechargerReadBalanceLocker;
+    pthread_cond_t WaitReadBalanceCondition;
+
 	int DeviceID;
 	QString DeviceToken;
 	bool DeviceIsLogin;
@@ -61,6 +64,7 @@ private:
 	static RechargerHandling* PrivateInstance;
 	pthread_t RechargerHandling1PthreadID;
 	pthread_t RechargerHandling2PthreadID;
+    pthread_t RechargerHandling3PthreadID;
 
 
 	RechargerHandling();
@@ -70,5 +74,6 @@ private:
 
 void* RechargerLoginHandler( void* arg );
 void* RechargerChargeHandler( void* arg );
+void* RechargerReadBalanceHandler( void* arg );
 
 #endif // RECHARGERHANDLING_H

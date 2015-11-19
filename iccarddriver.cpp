@@ -243,7 +243,7 @@ int ICCardDriver::pacarddll_arm(unsigned char* device,
         return 101;
     }
 
-    qDebug() << QObject::tr( "SUCCESS: Send machineno ok!\n" );
+    //qDebug() << QObject::tr( "SUCCESS: Send machineno ok!\n" );
     jym = buf[0];
     usleep(1*1000);
 
@@ -256,7 +256,7 @@ int ICCardDriver::pacarddll_arm(unsigned char* device,
         return 101;
     }
 
-    qDebug() << QObject::tr( "SUCCESS: Send data length ok!\n" );
+    //qDebug() << QObject::tr( "SUCCESS: Send data length ok!\n" );
     jym = jym ^ buf[0];
     usleep(1*1000);
 
@@ -275,7 +275,7 @@ int ICCardDriver::pacarddll_arm(unsigned char* device,
             return 101;
         }
 
-        qDebug( "\t success: send data sendbuf[%d] ok, sendbuf[%d] is: 0x%02x\n", i, i, buf[0]);
+        //qDebug( "\t success: send data sendbuf[%d] ok, sendbuf[%d] is: 0x%02x\n", i, i, buf[0]);
         jym = jym ^ buf[0];
         //		sleep(Delayms);
     }
@@ -288,13 +288,13 @@ int ICCardDriver::pacarddll_arm(unsigned char* device,
         close( this->COM_FD );
         return 101;
     }
-    qDebug("SUCCESS: Send parity ok!\n");
+    //qDebug("SUCCESS: Send parity ok!\n");
     usleep(Delayms*1000);
     //end to send data
 
     //begin to receive data
     nread = read( this->COM_FD ,buf,1);
-    qDebug( "test read length: %d\n", nread);
+    //qDebug( "test read length: %d\n", nread);
     if(1 != nread)
     {
         qDebug("Failed: Receive data head error!\n");
@@ -303,7 +303,7 @@ int ICCardDriver::pacarddll_arm(unsigned char* device,
     }
     else
     {
-        qDebug("test head char ok\n");
+        //qDebug("test head char ok\n");
     }
 
     if(buf[0] != head)
@@ -312,7 +312,7 @@ int ICCardDriver::pacarddll_arm(unsigned char* device,
         close( this->COM_FD );
         return 103;
     }
-    qDebug( "SUCCESS: Receive data head ok! head char is ; 0x%02x\n", buf[0]);
+    //qDebug( "SUCCESS: Receive data head ok! head char is ; 0x%02x\n", buf[0]);
     jym = head;
 
     nread = read( this->COM_FD, buf, 1);
@@ -323,7 +323,7 @@ int ICCardDriver::pacarddll_arm(unsigned char* device,
         return 104;
     }
 
-    qDebug( "SUCESS: Receive data length ok!, length is 0x%02x.\n", buf[0]);
+    //qDebug( "SUCESS: Receive data length ok!, length is 0x%02x.\n", buf[0]);
     tmplen = buf[0];
     jym = jym^buf[0];
 
@@ -339,7 +339,7 @@ int ICCardDriver::pacarddll_arm(unsigned char* device,
             return 105;
         }
 
-        qDebug( "\t success: Receive data recbuf[%d] ok!, recbuf[%d] is 0x%02x\n", i, i, buf[0]);
+        //qDebug( "\t success: Receive data recbuf[%d] ok!, recbuf[%d] is 0x%02x\n", i, i, buf[0]);
         recbuf[i] = buf[0];
         jym = jym^buf[0];
     }
@@ -352,8 +352,8 @@ int ICCardDriver::pacarddll_arm(unsigned char* device,
         return 106;
     }
 
-    qDebug( "\t success: Receive parity ! parity is 0x%02x\n", buf[0]);
-    qDebug( "\t success: jym parity ! parity is 0x%02x\n", jym);
+    //qDebug( "\t success: Receive parity ! parity is 0x%02x\n", buf[0]);
+    //qDebug( "\t success: jym parity ! parity is 0x%02x\n", jym);
     if(jym != buf[0])
     {
         qDebug("Failed: Parity  check error!\n");
@@ -361,7 +361,7 @@ int ICCardDriver::pacarddll_arm(unsigned char* device,
         return 107;
     }
 
-    qDebug( "SUCCESS: Parity ok!\n");
+    //qDebug( "SUCCESS: Parity ok!\n");
     reclen[0] = tmplen;
     close( this->COM_FD );
     //end to receive data
