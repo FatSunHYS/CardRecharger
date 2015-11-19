@@ -26,6 +26,8 @@ RechargerHandling::RechargerHandling()
     pthread_cond_init( &this->ChargeActionCondition, NULL );
     pthread_mutex_init( &this->RechargerReadBalanceLocker, NULL );
     pthread_cond_init( &this->WaitReadBalanceCondition, NULL );
+    pthread_mutex_init( &this->RechargerAshRecordLocker, NULL );
+    pthread_cond_init( &this->WaitAshRecordCondition, NULL );
 }
 
 
@@ -76,6 +78,18 @@ bool RechargerHandling::CreatePThread()
     else
     {
         qDebug() << QObject::tr( "Create pthread RechargerReadBalanceHandler Successfully." );
+    }
+
+    err = pthread_create( &( this->RechargerHandling4PthreadID ), NULL, RechargerAshRecordHandler, NULL );
+
+    if( err != 0 )
+    {
+        qDebug() << QObject::tr( "Create pthread RechargerAshRecordHandler error!" );
+        return false;
+    }
+    else
+    {
+        qDebug() << QObject::tr( "Create pthread RechargerAshRecordHandler Successfully." );
     }
 
     return true;
@@ -481,6 +495,7 @@ void* RechargerChargeHandler(void *arg)
 
     while( true )
     {
+        CardRecharger::SelfInstance->SetBalanceLabel( QString( "--" ) );
         CardRecharger::SelfInstance->ResetQRView();
         CardRecharger::SelfInstance->AllButtonEnable();
 
@@ -492,7 +507,7 @@ void* RechargerChargeHandler(void *arg)
 
         pthread_cond_wait( &Handler->ChargeActionCondition, &Handler->RechargerChargeLocker );
 
-        while( Handler->DeviceIsLogin == false )
+        if( Handler->DeviceIsLogin == false )
         {
             qDebug() << QObject::tr( "Device is not login!" );
 
@@ -1458,5 +1473,152 @@ void* RechargerReadBalanceHandler(void *arg)
 
 }
 
+
+void* RechargerAshRecordHandler(void *arg)
+{
+
+    RechargerHandling* Handler = RechargerHandling::GetInstance();
+    ICCardDriver* ICCardHandler = ICCardDriver::GetICCardDirverInstance();
+    int CardStatus;
+    unsigned char CardNumberBuffer[ 8 ];
+    unsigned char CardBalanceBuffer[ 8 ];
+    unsigned char CardCompanyPasswordBuffer[ 8 ];
+    unsigned char CardSynumBuffer[ 8 ];		//Unknown meanings variable
+    unsigned char CardDayTimeBuffer[ 8 ];
+    unsigned char CardTypeBuffer[ 8 ];
+    unsigned char CardCzmmBuffer[ 8 ];		//Unknown meanings variable
+    int TemperoryIntegerNumber;
+    double TemperoryDoubleNumber;
+
+    if( arg != NULL )
+    {
+
+    }
+
+    qDebug() << QObject::tr( "RechargerAshRecordHandler is running..." );
+    CardRecharger::SelfInstance->SetBalanceLabel( QString( "--" ) );
+
+    pthread_mutex_lock( &Handler->RechargerAshRecordLocker );
+
+    while( true )
+    {
+        pthread_cond_wait( &Handler->WaitAshRecordCondition, &Handler->RechargerAshRecordLocker );
+
+        if( Handler->DeviceIsLogin == false )
+        {
+            qDebug() << QObject::tr( "Device is not login!" );
+
+#ifdef CHINESE_OUTPUT
+            CardRecharger::SelfInstance->SetStatusLabel( QObject::tr( "网络断开，请通知维护人员！" ) );
+#else
+            CardRecharger::SelfInstance->SetStatusLabel( QObject::tr( "Network is unavilable!" ) );
+#endif
+            sleep( 5 );
+            CardRecharger::SelfInstance->SetBalanceLabel( QString( "--" ) );
+
+#ifdef CHINESE_OUTPUT
+            CardRecharger::SelfInstance->SetStatusLabel( QObject::tr( "请点击充值金额"));
+#else
+            CardRecharger::SelfInstance->SetStatusLabel( QObject::tr( "Click the recharger button to recharge"));
+#endif
+
+            CardRecharger::SelfInstance->AllButtonEnable();
+            continue;
+        }
+
+
+        /* Read card. */
+        memset( CardNumberBuffer, 0, sizeof( CardNumberBuffer ) );
+        memset( CardBalanceBuffer, 0, sizeof( CardBalanceBuffer ) );
+        memset( CardCompanyPasswordBuffer, 0, sizeof( CardCompanyPasswordBuffer ) );
+        memset( CardSynumBuffer, 0, sizeof( CardSynumBuffer ) );
+        memset( CardDayTimeBuffer, 0, sizeof( CardDayTimeBuffer ) );
+        memset( CardTypeBuffer, 0, sizeof( CardTypeBuffer ) );
+        memset( CardCzmmBuffer, 0, sizeof( CardCzmmBuffer ) );
+        CardStatus = ICCardHandler->readwatercard_arm( ( unsigned char* )( CardRecharger::SelfInstance->DeviceSerials.toUtf8().data() ),
+                                                       Handler->PasswordEdition,
+                                                       Handler->SectionNumber,
+                                                       Handler->CardPassword,
+                                                       CardNumberBuffer,
+                                                       CardBalanceBuffer,
+                                                       CardCompanyPasswordBuffer,
+                                                       CardDayTimeBuffer,
+                                                       CardTypeBuffer,
+                                                       100
+                                                       );
+
+        if( CardStatus != 0 )
+        {
+            qDebug() << QObject::tr( "CardStatus = " ) << CardStatus;
+
+#ifdef CHINESE_OUTPUT
+            CardRecharger::SelfInstance->SetStatusLabel( QObject::tr( "读卡错误，请插好卡片！" ) );
+#else
+            CardRecharger::SelfInstance->SetStatusLabel( QObject::tr( "Read Card Error!" ) );
+#endif
+            sleep( 5 );
+            CardRecharger::SelfInstance->SetBalanceLabel( QString( "--" ) );
+            continue;
+        }
+
+        CardStatus = ICCardHandler->readserialnumber( ( unsigned char* )( CardRecharger::SelfInstance->DeviceSerials.toUtf8().data() ),
+                                                      Handler->SectionNumber,
+                                                      Handler->CardPassword,
+                                                      100,
+                                                      Handler->CardSequenceNumber );
+
+        if( CardStatus != 0 )
+        {
+            qDebug() << QObject::tr( "CardStatus = " ) << CardStatus;
+
+#ifdef CHINESE_OUTPUT
+            CardRecharger::SelfInstance->SetStatusLabel( QObject::tr( "读卡错误，请插好卡片！" ) );
+#else
+            CardRecharger::SelfInstance->SetStatusLabel( QObject::tr( "Read Card Sequence Number Error!" ) );
+#endif
+            sleep( 5 );
+            CardRecharger::SelfInstance->SetBalanceLabel( QString( "--" ) );
+            continue;
+        }
+
+        TemperoryIntegerNumber = ( int )CardBalanceBuffer[ 0 ];
+        TemperoryIntegerNumber <<= 8;
+        TemperoryIntegerNumber += ( int ) CardBalanceBuffer[ 1 ];
+        TemperoryIntegerNumber <<= 8;
+        TemperoryIntegerNumber += ( int )CardBalanceBuffer[ 2 ];
+        TemperoryIntegerNumber <<= 8;
+        TemperoryIntegerNumber += ( int )CardBalanceBuffer[ 3 ];
+
+        TemperoryDoubleNumber = ( double )TemperoryIntegerNumber / 100.0;
+        Handler->CardBalance = TemperoryDoubleNumber;
+
+        TemperoryIntegerNumber = ( int )CardNumberBuffer[ 0 ];
+        TemperoryIntegerNumber <<= 8;
+        TemperoryIntegerNumber += ( int ) CardNumberBuffer[ 1 ];
+        TemperoryIntegerNumber <<= 8;
+        TemperoryIntegerNumber += ( int )CardNumberBuffer[ 2 ];
+        TemperoryIntegerNumber <<= 8;
+        TemperoryIntegerNumber += ( int )CardNumberBuffer[ 3 ];
+
+        Handler->CardNumber = TemperoryIntegerNumber;
+
+        qDebug() << QObject::tr( "CardBalance = " ) << Handler->CardBalance;
+        qDebug() << QObject::tr( "CardNumber = " ) << QString::number( Handler->CardNumber );
+        qDebug() << QObject::tr( "CardSequenceNumber = " ) << QString::number( Handler->CardSequenceNumber );
+
+        CardRecharger::SelfInstance->SetBalanceLabel( QString::number( Handler->CardBalance, 'f', 2 ) );
+
+
+
+
+
+
+        sleep( 5 );
+        CardRecharger::SelfInstance->SetBalanceLabel( QString( "--" ) );
+        CardRecharger::SelfInstance->AllButtonEnable();
+    }
+
+    return ( void* )0;
+}
 
 

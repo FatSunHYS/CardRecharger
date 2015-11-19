@@ -59,7 +59,7 @@ int ICCardDriver::set_speed( int speed )
                 qDebug() << QObject::tr( "Failed: Set speed error!\n" );
                 return status;
             }
-            qDebug() << QObject::tr( "SUCCESS: Set speed ok!\n" );
+            //qDebug() << QObject::tr( "SUCCESS: Set speed ok!\n" );
             tcflush( this->COM_FD,TCIOFLUSH);
             return 0;
         }
@@ -159,7 +159,7 @@ int ICCardDriver::set_parity(int databits, int stopbits, int parity)
         return 4;
     }
 
-    qDebug() << QObject::tr( "SUCCESS: Set Comm options ok!\n" );
+    //qDebug() << QObject::tr( "SUCCESS: Set Comm options ok!\n" );
     return 0;
 }
 
@@ -178,7 +178,7 @@ int ICCardDriver::set_timeout()
         return 1;
     }
 
-    qDebug() << QObject::tr( "SUCCESS: set timeout ok!\n" );
+    //qDebug() << QObject::tr( "SUCCESS: set timeout ok!\n" );
     return 0;
 }
 
@@ -558,7 +558,7 @@ int ICCardDriver::readserialnumber( unsigned char *comdevice, unsigned char secn
             //unsigned int serialnum;
             memcpy(&serialnum, &recbuf[3], 4);
             //cout<<"serialnum of card is : "<<serialnum<<endl;
-            qDebug() << QObject::tr( "serialnum of card is :" ) << serialnum;
+            //qDebug() << QObject::tr( "serialnum of card is :" ) << serialnum;
             //return serialnum;
         }
         else

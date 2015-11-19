@@ -525,12 +525,17 @@ void CardRecharger::on_Recharge200Button_clicked()
 void CardRecharger::on_GreyRecordButton_clicked()
 {
 	this->AllButtonDisable();
+
+#if 0
 #ifdef CHINESE_OUTPUT
 	QMessageBox::information( this, QObject::tr( "支付提醒" ), QObject::tr( "本功能暂未提供！" ), QMessageBox::Ok );
 #else
 	QMessageBox::information( this, QObject::tr( "Pay Infomation." ), QObject::tr( "Not avilable now!"), QMessageBox::Ok );
 #endif
 	this->AllButtonEnable();
+#endif
+
+    pthread_cond_signal( &( RechargerHandling::GetInstance()->WaitAshRecordCondition ) );
 }
 
 

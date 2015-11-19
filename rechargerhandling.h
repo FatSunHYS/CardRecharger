@@ -27,6 +27,8 @@ public:
     pthread_cond_t ChargeActionCondition;
     pthread_mutex_t RechargerReadBalanceLocker;
     pthread_cond_t WaitReadBalanceCondition;
+    pthread_mutex_t RechargerAshRecordLocker;
+    pthread_cond_t WaitAshRecordCondition;
 
 	int DeviceID;
 	QString DeviceToken;
@@ -65,6 +67,7 @@ private:
 	pthread_t RechargerHandling1PthreadID;
 	pthread_t RechargerHandling2PthreadID;
     pthread_t RechargerHandling3PthreadID;
+    pthread_t RechargerHandling4PthreadID;
 
 
 	RechargerHandling();
@@ -75,5 +78,6 @@ private:
 void* RechargerLoginHandler( void* arg );
 void* RechargerChargeHandler( void* arg );
 void* RechargerReadBalanceHandler( void* arg );
+void* RechargerAshRecordHandler( void* arg );
 
 #endif // RECHARGERHANDLING_H
