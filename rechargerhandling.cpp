@@ -1630,7 +1630,7 @@ void* RechargerAshRecordHandler(void *arg)
 
 
         /* Split the ash records. */
-        qDebug() << RespondContent;
+        //qDebug() << RespondContent;
 
         RegularExpression.indexIn( RespondContent );
         list = RegularExpression.capturedTexts();

@@ -91,7 +91,7 @@ void* AdvertisementHandler( void* arg )
             continue;
         }
 
-        qDebug() << RespondContent;
+        //qDebug() << RespondContent;
         strcpy( Handler->JSONBuffer, RespondContent.toUtf8().data() );
         root = cJSON_Parse( Handler->JSONBuffer );
 
@@ -134,7 +134,7 @@ void* AdvertisementHandler( void* arg )
             sprintf( Handler->CommandBuffer, "./Advertisement/%d", i );
             image->load( QString( Handler->CommandBuffer ) );
             CardRecharger::SelfInstance->SetAdvertisementView( image );
-            sleep( 5 );
+            sleep( 30 );
             CardRecharger::SelfInstance->ResetAdvertisementView();
         }
 
