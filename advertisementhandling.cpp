@@ -78,6 +78,8 @@ void* AdvertisementHandler( void* arg )
     url.clear();
     url.setUrl( CardRecharger::SelfInstance->CardRechargerAdvertisementURL + QObject::tr( "/clientapi/adpicture/getAdPitureList" ) );
 
+    qDebug() << url.toString();
+
     while( true )
     {
         RequestResult = Handler->AdvertisementClient.RequestGet( url, RespondContent );
@@ -89,6 +91,7 @@ void* AdvertisementHandler( void* arg )
             continue;
         }
 
+        qDebug() << RespondContent;
         strcpy( Handler->JSONBuffer, RespondContent.toUtf8().data() );
         root = cJSON_Parse( Handler->JSONBuffer );
 
@@ -131,7 +134,7 @@ void* AdvertisementHandler( void* arg )
             sprintf( Handler->CommandBuffer, "./Advertisement/%d", i );
             image->load( QString( Handler->CommandBuffer ) );
             CardRecharger::SelfInstance->SetAdvertisementView( image );
-            sleep( 30 );
+            sleep( 5 );
             CardRecharger::SelfInstance->ResetAdvertisementView();
         }
 

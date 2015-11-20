@@ -1426,6 +1426,8 @@ void* RechargerReadBalanceHandler(void *arg)
         CardRecharger::SelfInstance->AllButtonEnable();
     }
 
+    return ( void* )0;
+
 }
 
 

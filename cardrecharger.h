@@ -68,9 +68,8 @@ private:
 
     pthread_mutex_t AdvertisementLocker;
     QGraphicsScene* AdvertisementScene;
-    bool AdvertisementSceneIsEmpty;
     QImage *AdvertisementImage;  
-
+    bool IsChangeAdvertisement;
 
 };
 
