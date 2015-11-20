@@ -484,6 +484,7 @@ void* RechargerChargeHandler(void *arg)
     unsigned char CardCzmmBuffer[ 8 ];		//Unknown meanings variable
     int TemperoryIntegerNumber;
     double TemperoryDoubleNumber;
+    int scantime;
 
     if( arg != NULL )
     {
@@ -757,8 +758,9 @@ void* RechargerChargeHandler(void *arg)
 
         /* Query the status every 4s, 120s in total. */
         QueryResult = false;
-        RemainingTime = 120;
-        for( int i = 0; i < 30; ++i )
+        scantime = 60;
+        RemainingTime = scantime;
+        for( int i = 0; i < scantime / 4; ++i )
         {
             for( int j = 0; j < 4; ++j )
             {

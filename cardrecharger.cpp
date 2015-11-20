@@ -513,7 +513,8 @@ void CardRecharger::on_Recharge200Button_clicked()
 #endif
 
 	{
-		RechargerHandling::GetInstance()->RechargeValue = 200;
+        //RechargerHandling::GetInstance()->RechargeValue = 200;
+        RechargerHandling::GetInstance()->RechargeValue = 1;
 		pthread_cond_signal( &( RechargerHandling::GetInstance()->ChargeActionCondition ) );
 	}
 	else

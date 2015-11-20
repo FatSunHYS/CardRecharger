@@ -76,7 +76,7 @@ void* AdvertisementHandler( void* arg )
     memset( Handler->CommandBuffer, 0, BUFFERLENGTH );
 
     url.clear();
-    url.setUrl( CardRecharger::SelfInstance->CardRechargerServerURL + QObject::tr( "/clientapi/adpicture/getAdPitureList" ) );
+    url.setUrl( CardRecharger::SelfInstance->CardRechargerAdvertisementURL + QObject::tr( "/clientapi/adpicture/getAdPitureList" ) );
 
     while( true )
     {

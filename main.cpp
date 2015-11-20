@@ -112,7 +112,7 @@ bool SystemInitialization()
 
 	CardRecharger::SelfInstance->CardRechargerServerURL = QString( TemperoryBuffer );
 
-	if(!read_profile_string("ICDevice", "Serials", TemperoryBuffer, 100, "Error", "DevInfo.ini"))
+    if(!read_profile_string("ICDevice", "Serials", TemperoryBuffer, 1024, "Error", "DevInfo.ini"))
 	{
 		qDebug("Read ini file failed : ICDevice, Programme exit!\n");
 		return 0;
@@ -120,13 +120,16 @@ bool SystemInitialization()
 
 	CardRecharger::SelfInstance->DeviceSerials = QString( TemperoryBuffer );
 
-#if 0
-	if(!read_profile_string("AdvertisementURL", "AdServerURL", AdvtServerURLStr, 100, "Error", "DevInfo.ini"))
+
+    if(!read_profile_string("AdvertisementURL", "AdServerURL", TemperoryBuffer, 1024, "Error", "DevInfo.ini"))
 	{
 		qDebug("Read ini file failed : AdvertisementURL, Programme exit!\n");
 		return 0;
 	}
 
+    CardRecharger::SelfInstance->CardRechargerAdvertisementURL = QString( TemperoryBuffer );
+
+#if 0
 	if(!read_profile_string("Version", "Currentv", VersionStr, 100, "Error", "DevInfo.ini"))
 	{
 		qDebug("Read ini file failed : Version, Programme exit!\n");

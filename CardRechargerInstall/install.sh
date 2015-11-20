@@ -17,6 +17,12 @@ echo "Build the directory for the program done!" | tee -a ${Log}
 
 cd ${LocalPath}/Library
 cp -rv ./CURL/* /usr/local | tee -a ${Log}
+ln -sf /usr/local/lib/libcurl.so.4.4.0 /usr/local/lib/libcurl.so
+ln -sf /usr/local/lib/libcurl.so.4.4.0 /usr/local/lib/libcurl.so.4
+cat >> /etc/ld.so.conf << "EOF"
+/usr/local/lib
+EOF
+/sbin/ldconfig -v | tee -a ${Log}
 cp -rv ./QREncode/* /usr/local | tee -a ${Log}
 cp -rv ./NTP/* /usr | tee -a ${Log}
 echo "Setup the libraries done!" | tee -a ${Log}
@@ -29,9 +35,7 @@ echo "Setup service configuration files done!" | tee -a ${Log}
 
 cd ${LocalPath}/script
 mkdir -p ${InstallationPath}/script | tee -a ${Log}
-cp -v ./reboot.sh ${InstallationPath}/script | tee -a ${Log}
-cp -v ./NTPrecalibrate.sh ${InstallationPath}/script | tee -a ${Log}
-cp -v ./test.sh ${InstallationPath}/script | tee -a ${Log}
+cp -v ./* ${InstallationPath}/script | tee -a ${Log}
 echo "Setup scripts done!" | tee -a ${Log}
 
 cd ${LocalPath}
@@ -53,6 +57,8 @@ cp -p /etc/crontabs/root.crontabs /var/spool/cron/crontabs/root
 chmod 777 /var/spool/cron/crontabs/root
 107a\
 crond
+107a\
+sh /home/AIROB/script/startwifi.sh
 103a\
 rm -rf /home/AIROB/Advertisement/*' ./rcS
 echo "Modify the /etc/init.d/rcS done!" | tee -a ${Log}
@@ -64,6 +70,20 @@ cd /home/AIROB
 7c\
 ./CardRecharger -qws' ./qt4
 echo "Modify the /bin/qt4 done!" | tee -a ${Log}
+
+cat >> /root/.bash_profile << "EOF"
+PATH=$PATH:/usr/local/bin
+EOF
+echo "Add /usr/local/bin to root bash." | tee -a ${Log}
+
+cd /etc
+mv ./eth0-setting ./eth0-setting.bak
+cat >> ./eth0-setting << "EOF"
+DEVICE="eth0"
+BOOTPROTO="dhcp"
+ONBOOT="yes"
+EOF
+echo "Setup the /etc/eth0-setting" | tee -a ${Log}
 
 cp -v ${Log} ${InstallationPath}/LogFile/
 

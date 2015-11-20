@@ -22,6 +22,7 @@ public:
 	QString CardRechargerClientID;
 	QString CardRechargerClientPassword;
 	QString CardRechargerServerURL;
+    QString CardRechargerAdvertisementURL;
 	QString DeviceSerials;
 
 	explicit CardRecharger(QWidget *parent = 0);
