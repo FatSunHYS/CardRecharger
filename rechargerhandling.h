@@ -51,6 +51,9 @@ public:
 	int RechargeValue;
 	_PayWay RechargePayWay;
 
+    char* AshRecordBuffer;
+    char* CommandBuffer;
+
 	static RechargerHandling* GetInstance();
 	bool CreatePThread();
 	void ParseLoginMessage( QString& Message );
