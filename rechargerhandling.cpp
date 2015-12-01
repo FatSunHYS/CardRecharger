@@ -158,7 +158,7 @@ void* RechargerLoginHandler( void* arg )
         RequestResult = Handler->RechargerClient.RequestGet( url, RespondContent );
         if( RequestResult != CURLE_OK )
         {
-            qDebug() << QObject::tr( "Login Request error!" );
+            qDebug() << QObject::tr( "Login Request error! - 1" );
             sleep( 2 );
             continue;
         }
@@ -167,13 +167,19 @@ void* RechargerLoginHandler( void* arg )
 
         if( Handler->DeviceIsLogin == false )
         {
+            qDebug() << QObject::tr( "Login Request error! - 2" );
+            qDebug() << RespondContent;
             sleep( 1 );
-            qDebug() << QObject::tr( "Login Request error!" );
             continue;
         }
 
         /* Login successfully. */
         qDebug() << QObject::tr( "Login successfully." );
+        qDebug() << QObject::tr( "RechargerLoginHandler:SectionNumber=") << Handler->SectionNumber;
+        qDebug() << QObject::tr( "RechargerLoginHandler:PasswordEdition=") << Handler->PasswordEdition;
+        qDebug() << QObject::tr( "RechargerLoginHandler:DeviceID=") << Handler->DeviceID;
+        qDebug() << QObject::tr( "RechargerLoginHandler:DeviceToken=") << Handler->DeviceToken;
+        qDebug() << QObject::tr( "RechargerLoginHandler:CardPassword=") << Handler->CardPassword;
 
         RechargerErrorCounter = 0;
         /* Send Heart Package every 15min. */
@@ -205,11 +211,11 @@ void* RechargerLoginHandler( void* arg )
 
             if( RequestResult != CURLE_OK )
             {
-                qDebug() << QObject::tr( "Send heart package fail.Retry." );
+                qDebug() << QObject::tr( "Send heart package fail.Retry. - 1" );
                 ++RechargerErrorCounter;
                 if( RechargerErrorCounter >= 3 )
                 {
-                    qDebug() << QObject::tr( "Send heart package fail.Relogin." );
+                    qDebug() << QObject::tr( "Send heart package fail.Relogin. - 2" );
                     break;
                 }
                 sleep( 2 );
@@ -220,11 +226,12 @@ void* RechargerLoginHandler( void* arg )
 
             if( Handler->IsKeepAlived == false )
             {
-                qDebug() << QObject::tr( "Send heart package fail.Retry." );
+                qDebug() << QObject::tr( "Send heart package fail.Retry. - 3" );
+                qDebug() << RespondContent;
                 ++RechargerErrorCounter;
                 if( RechargerErrorCounter >= 3 )
                 {
-                    qDebug() << QObject::tr( "Send heart package fail.Relogin." );
+                    qDebug() << QObject::tr( "Send heart package fail.Relogin. - 4" );
                     break;
                 }
                 sleep( 2 );
@@ -260,6 +267,7 @@ void RechargerHandling::ParseLoginMessage(QString &Message)
 
     if( list.size() != 3 )
     {
+        qDebug() << QObject::tr( "ParseLoginMessage:list.size()!=3" );
         return;
     }
 
@@ -268,6 +276,7 @@ void RechargerHandling::ParseLoginMessage(QString &Message)
 
     if( Message_JSON == QString( "" ) )
     {
+        qDebug( "ParseLoginMessage:Message_JSON==\"\"");
         return;
     }
 
@@ -281,6 +290,7 @@ void RechargerHandling::ParseLoginMessage(QString &Message)
     int TemperoryCode = cJSON_GetObjectItem( root, "code" )->valueint;
     if( TemperoryCode != 0 )
     {
+        qDebug( "ParseLoginMessage:Code!=0" );
         cJSON_Delete( root );
         return;
     }
@@ -297,6 +307,7 @@ void RechargerHandling::ParseLoginMessage(QString &Message)
     /* Checkout the MD5 */
     if( Message_MD5 == QString( "" ) )
     {
+        qDebug( "ParseLoginMessage:Message_MD5==\"\"");
         return;
     }
 
@@ -399,6 +410,7 @@ void RechargerHandling::ParseKeepAlivedMessage(QString &Message)
 
     if( list.size() != 3 )
     {
+        qDebug( "ParseKeepAliveMessage:list.size()!=3");
         return;
     }
 
@@ -407,6 +419,7 @@ void RechargerHandling::ParseKeepAlivedMessage(QString &Message)
 
     if( Message_JSON == QString( "" ) )
     {
+        qDebug( "ParseKeepAliveMessage:Message_JSON==\"\"");
         return;
     }
 
@@ -420,6 +433,7 @@ void RechargerHandling::ParseKeepAlivedMessage(QString &Message)
     int TemperoryCode = cJSON_GetObjectItem( root, "code" )->valueint;
     if( TemperoryCode != 0 )
     {
+        qDebug( "ParseKeepAliveMessage:Code!=0");
         cJSON_Delete( root );
         return;
     }
@@ -430,6 +444,7 @@ void RechargerHandling::ParseKeepAlivedMessage(QString &Message)
     /* Checkout the MD5 */
     if( Message_MD5 == QString( "" ) )
     {
+        qDebug("ParseKeepAliveMessage:Message_MD5==\"\"");
         return;
     }
 
@@ -712,6 +727,7 @@ void* RechargerChargeHandler(void *arg)
         RequestResult = Handler->RechargerClient.RequestGet( url, RespondContent );
         if( RequestResult != CURLE_OK )
         {
+            qDebug("RechargerChargeHandler:Network is unavilable - 1");
 #ifdef CHINESE_OUTPUT
             CardRecharger::SelfInstance->SetStatusLabel( QObject::tr( "网络错误，请通知维护人员检查网络！" ) );
 #else
@@ -725,6 +741,7 @@ void* RechargerChargeHandler(void *arg)
 
         if( Handler->TradeStatus != QString( "PRECREATE_SUCCESS" ) )
         {
+            qDebug() << RespondContent;
 #ifdef CHINESE_OUTPUT
             CardRecharger::SelfInstance->SetStatusLabel( QObject::tr( "申请支付二维码失败！" ) );
 #else
@@ -800,6 +817,7 @@ void* RechargerChargeHandler(void *arg)
             RequestResult = Handler->RechargerClient.RequestGet( url, RespondContent );
             if( RequestResult != CURLE_OK )
             {
+                qDebug("RechargerChargeHandler:Network is unavilable - 2");
 #ifdef CHINESE_OUTPUT
                 CardRecharger::SelfInstance->SetStatusLabel( QObject::tr( "网络错误，请通知维护人员检查网络！" ) );
 #else
@@ -812,6 +830,8 @@ void* RechargerChargeHandler(void *arg)
 
             if( Handler->TradeStatus == QString( "TRADE_CLOSED" ) )
             {
+                qDebug("RechargerChargeHandler:TRADE_CLOSED");
+                qDebug() << RespondContent;
 #ifdef CHINESE_OUTPUT
                 CardRecharger::SelfInstance->SetStatusLabel( QObject::tr( "付款超时，充值失败！" ) );
 #else
@@ -836,6 +856,8 @@ void* RechargerChargeHandler(void *arg)
         {
             if( Handler->TradeStatus == QString( "PRECREATE_SUCCESS" ) )
             {
+                qDebug("RechargerChargeHandler:QueryResult==false");
+
 #ifdef CHINESE_OUTPUT
                 CardRecharger::SelfInstance->SetStatusLabel( QObject::tr( "付款超时，充值失败！" ) );
 #else
@@ -881,6 +903,7 @@ void* RechargerChargeHandler(void *arg)
         RequestResult = Handler->RechargerClient.RequestGet( url, RespondContent );
         if( RequestResult != CURLE_OK )
         {
+            qDebug("RechargerChargeHandler:Network is unavilable - 3");
 #ifdef CHINESE_OUTPUT
             CardRecharger::SelfInstance->SetStatusLabel( QObject::tr( "因网络错误交易失败，请到服务中心进行灰记录处理！" ) );
 #else
@@ -894,6 +917,8 @@ void* RechargerChargeHandler(void *arg)
 
         if( Handler->PreRechargeCheckIsSuccessfully == false )
         {
+            qDebug("RechargerChargeHandler:PreRechargeCheckIsSuccessfully==false");
+            qDebug() << RespondContent;
 #ifdef CHINESE_OUTPUT
             CardRecharger::SelfInstance->SetStatusLabel( QObject::tr( "交易失败，请到服务中心进行灰记录处理！" ) );
 #else
@@ -976,6 +1001,7 @@ void* RechargerChargeHandler(void *arg)
         RequestResult = Handler->RechargerClient.RequestGet( url, RespondContent );
         if( RequestResult != CURLE_OK )
         {
+            qDebug("RechargerChargeHandler:Network is unavilable - 4");
 #ifdef CHINESE_OUTPUT
             CardRecharger::SelfInstance->SetStatusLabel( QObject::tr( "因网络错误交易失败，请到服务中心进行灰记录处理！" ) );
 #else
@@ -990,6 +1016,8 @@ void* RechargerChargeHandler(void *arg)
 
         if( Handler->IsRechargeFinish == false )
         {
+            qDebug("RechargerChargeHandler:IsRechargeFinish==false");
+            qDebug() << RespondContent;
 #ifdef CHINESE_OUTPUT
             CardRecharger::SelfInstance->SetStatusLabel( QObject::tr( "交易失败，请到服务中心进行灰记录处理！" ) );
 #else

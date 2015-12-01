@@ -23,7 +23,7 @@ cat >> /etc/ld.so.conf << "EOF"
 /usr/local/lib
 EOF
 /sbin/ldconfig -v | tee -a ${Log}
-cp -rv ./QREncode/* /usr/local | tee -a ${Log}
+#cp -rv ./QREncode/* /usr/local | tee -a ${Log}
 cp -rv ./NTP/* /usr | tee -a ${Log}
 echo "Setup the libraries done!" | tee -a ${Log}
 
@@ -68,7 +68,10 @@ sed -i -e '
 6c\
 cd /home/AIROB
 7c\
-./CardRecharger -qws' ./qt4
+./CardRecharger -qws &> /home/AIROB/LogFile/ProgramDebug.log
+5a\
+rm -rf /home/AIROB/LogFile/ProgramDebug.log' ./qt4
+
 echo "Modify the /bin/qt4 done!" | tee -a ${Log}
 
 cat >> /root/.bash_profile << "EOF"
