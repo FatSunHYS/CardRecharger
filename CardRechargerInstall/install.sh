@@ -58,6 +58,8 @@ chmod 777 /var/spool/cron/crontabs/root
 107a\
 crond
 107a\
+rm -rf /home/AIROB/LogFile/wifi.log
+107a\
 sh /home/AIROB/script/startwifi.sh
 103a\
 rm -rf /home/AIROB/Advertisement/*' ./rcS

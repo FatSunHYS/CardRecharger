@@ -182,7 +182,7 @@ void* RechargerLoginHandler( void* arg )
         qDebug() << QObject::tr( "RechargerLoginHandler:CardPassword=") << Handler->CardPassword;
 
         RechargerErrorCounter = 0;
-        /* Send Heart Package every 15min. */
+        /* Send Heart Package every 5min. */
         while( true )
         {
             Handler->IsKeepAlived = false;
@@ -242,7 +242,7 @@ void* RechargerLoginHandler( void* arg )
             RechargerErrorCounter = 0;
 
             //sleep( 10 );
-            sleep( 900 );
+            sleep( 300 );
             //sleep( 30 );
         }
 
