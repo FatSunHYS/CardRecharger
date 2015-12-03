@@ -500,6 +500,8 @@ void* RechargerChargeHandler(void *arg)
     int TemperoryIntegerNumber;
     double TemperoryDoubleNumber;
     int scantime;
+    int NetworkErrorCounter;
+    bool NetworkIsError;
 
     if( arg != NULL )
     {
@@ -773,13 +775,15 @@ void* RechargerChargeHandler(void *arg)
         CardRecharger::SelfInstance->SetQRView( qrimage );
         qrimage = NULL;
 
-        /* Query the status every 4s, 120s in total. */
+        /* Query the status every 2s, 60s in total. */
         QueryResult = false;
         scantime = 60;
         RemainingTime = scantime;
-        for( int i = 0; i < scantime / 4; ++i )
+        NetworkErrorCounter = 0;
+        NetworkIsError = true;
+        for( int i = 0; i < scantime / 2; ++i )
         {
-            for( int j = 0; j < 4; ++j )
+            for( int j = 0; j < 2; ++j )
             {
 #ifdef CHINESE_OUTPUT
                 CardRecharger::SelfInstance->SetStatusLabel( QObject::tr( "请扫描二维码！ " ) + QString::number( RemainingTime ) );
@@ -814,18 +818,27 @@ void* RechargerChargeHandler(void *arg)
             url.setUrl( CardRecharger::SelfInstance->CardRechargerServerURL + QObject::tr( "/clientapi/trade/query?" ) + RequestParameters );
             qDebug() << QObject::tr( "RequestGet:" ) << url.toString();
 
+
             RequestResult = Handler->RechargerClient.RequestGet( url, RespondContent );
             if( RequestResult != CURLE_OK )
             {
-                qDebug("RechargerChargeHandler:Network is unavilable - 2");
+                ++NetworkErrorCounter;
+                if( NetworkErrorCounter == 3 )
+                {
+                    qDebug("RechargerChargeHandler:Network is unavilable - 2");
 #ifdef CHINESE_OUTPUT
-                CardRecharger::SelfInstance->SetStatusLabel( QObject::tr( "网络错误，请通知维护人员检查网络！" ) );
+                    CardRecharger::SelfInstance->SetStatusLabel( QObject::tr( "网络错误，请通知维护人员检查网络！" ) );
 #else
-                CardRecharger::SelfInstance->SetStatusLabel( QObject::tr( "Network is unavilable!" ) );
+                    CardRecharger::SelfInstance->SetStatusLabel( QObject::tr( "Network is unavilable!" ) );
 #endif
-                break;
+                    break;
+                }
+
+                qDebug( "RechargerChargerHandler:RequestResult!=CURLE_OK - %d", NetworkErrorCounter);
+                continue;
             }
 
+            NetworkIsError = false;
             Handler->ParseQueryMessage( RespondContent );
 
             if( Handler->TradeStatus == QString( "TRADE_CLOSED" ) )
@@ -854,7 +867,7 @@ void* RechargerChargeHandler(void *arg)
 
         if( QueryResult == false )
         {
-            if( Handler->TradeStatus == QString( "PRECREATE_SUCCESS" ) )
+            if( ( Handler->TradeStatus == QString( "PRECREATE_SUCCESS" ) ) && ( NetworkIsError == false ) )
             {
                 qDebug("RechargerChargeHandler:QueryResult==false");
 
