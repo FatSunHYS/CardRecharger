@@ -1,3 +1,3 @@
 #! /bin/sh
 
-ntpdate time.windows.com | tee /home/AIROB/LogFile/NTPrefreash.log
+ntpdate cn.pool.ntp.org | tee /home/AIROB/LogFile/NTPrefreash.log

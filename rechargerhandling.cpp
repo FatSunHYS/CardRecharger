@@ -110,6 +110,7 @@ void* RechargerLoginHandler( void* arg )
     QString RespondContent;
     RechargerHandling* Handler = RechargerHandling::GetInstance();
     int RechargerErrorCounter;
+    int BadNetwork;
 
     if( arg != NULL )
     {
@@ -117,6 +118,8 @@ void* RechargerLoginHandler( void* arg )
     }
 
     qDebug() << QObject::tr( "RechargerHandler is running..." );
+
+    BadNetwork = 0;
 
     while( true )
     {
@@ -126,6 +129,25 @@ void* RechargerLoginHandler( void* arg )
         while( TimestampHandling::GetInstance()->IsFirstInitialed() == false )
         {
 
+        }
+
+        if( BadNetwork >= 30 )
+        {
+
+#ifdef CHINESE_OUTPUT
+            CardRecharger::SelfInstance->SetStatusLabel( QObject::tr( "网络错误！5s后设备重启..."));
+#else
+            CardRecharger::SelfInstance->SetStatusLabel( QObject::tr( "Network Error! Reboot after 5s..."));
+#endif
+            CardRecharger::SelfInstance->AllButtonDisable();
+            sleep( 5 );
+
+            //if the network is not connected within 1 minutes, reboot the machine.
+            system( "sh /home/AIROB/script/reboot.sh" );
+            while( true )
+            {
+
+            }
         }
 
 #ifdef CHINESE_OUTPUT
@@ -160,6 +182,7 @@ void* RechargerLoginHandler( void* arg )
         {
             qDebug() << QObject::tr( "Login Request error! - 1" );
             sleep( 2 );
+            ++BadNetwork;
             continue;
         }
 
@@ -170,8 +193,11 @@ void* RechargerLoginHandler( void* arg )
             qDebug() << QObject::tr( "Login Request error! - 2" );
             qDebug() << RespondContent;
             sleep( 1 );
+            ++BadNetwork;
             continue;
         }
+
+        BadNetwork = 0;
 
         /* Login successfully. */
         qDebug() << QObject::tr( "Login successfully." );
@@ -1505,7 +1531,7 @@ void* RechargerAshRecordHandler(void *arg)
     int TemperoryCode;
     int AshRecordTotalNumber;
     int TemperoryCounter;
-
+    bool NotFirstRun = false;
 
 
     if( arg != NULL )
@@ -1520,14 +1546,19 @@ void* RechargerAshRecordHandler(void *arg)
 
     while( true )
     {
+        if( NotFirstRun == false )
+        {
 #ifdef CHINESE_OUTPUT
-        CardRecharger::SelfInstance->SetStatusLabel( QObject::tr( "请点击充值金额"));
+            CardRecharger::SelfInstance->SetStatusLabel( QObject::tr( "请点击充值金额"));
 #else
-        CardRecharger::SelfInstance->SetStatusLabel( QObject::tr( "Click the recharger button to recharge"));
+            CardRecharger::SelfInstance->SetStatusLabel( QObject::tr( "Click the recharger button to recharge"));
 #endif
 
-        CardRecharger::SelfInstance->SetBalanceLabel( QString( "--" ) );
-        CardRecharger::SelfInstance->AllButtonEnable();
+            CardRecharger::SelfInstance->SetBalanceLabel( QString( "--" ) );
+            CardRecharger::SelfInstance->AllButtonEnable();
+
+            NotFirstRun = true;
+        }
 
         pthread_cond_wait( &Handler->WaitAshRecordCondition, &Handler->RechargerAshRecordLocker );
 
