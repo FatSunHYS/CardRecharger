@@ -1546,7 +1546,7 @@ void* RechargerAshRecordHandler(void *arg)
 
     while( true )
     {
-        if( NotFirstRun == false )
+        if( NotFirstRun == true )
         {
 #ifdef CHINESE_OUTPUT
             CardRecharger::SelfInstance->SetStatusLabel( QObject::tr( "请点击充值金额"));
@@ -1557,8 +1557,9 @@ void* RechargerAshRecordHandler(void *arg)
             CardRecharger::SelfInstance->SetBalanceLabel( QString( "--" ) );
             CardRecharger::SelfInstance->AllButtonEnable();
 
-            NotFirstRun = true;
         }
+
+        NotFirstRun = true;
 
         pthread_cond_wait( &Handler->WaitAshRecordCondition, &Handler->RechargerAshRecordLocker );
 
